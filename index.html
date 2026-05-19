@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f2937">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Bestand">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Bestand Scanner</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --primary: #1f2937;
+      --primaryText: #ffffff;
+      --ok: #065f46;
+      --bad: #991b1b;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--primary);
+      color: white;
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 4px 0 0; font-size: 13px; opacity: .85; }
+    main { max-width: 860px; margin: 0 auto; padding: 14px; padding-bottom: 100px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 12px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    h2 { font-size: 17px; margin: 0 0 12px; }
+    label { display: block; font-weight: 650; font-size: 13px; margin: 10px 0 5px; }
+    input, select, button, textarea {
+      font: inherit;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 11px 12px;
+      width: 100%;
+      background: white;
+      color: var(--text);
+    }
+    input[type="number"] { appearance: textfield; }
+    button {
+      cursor: pointer;
+      border: 0;
+      background: var(--primary);
+      color: var(--primaryText);
+      font-weight: 700;
+    }
+    button.secondary { background: #e5e7eb; color: #111827; border: 1px solid var(--border); }
+    button.good { background: #047857; }
+    button.bad { background: #b91c1c; }
+    button.warn { background: #b45309; }
+    button:disabled { opacity: .5; cursor: default; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .actions button { flex: 1; min-width: 120px; }
+    .mode {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .mode button { background: #e5e7eb; color: #111827; border: 1px solid var(--border); }
+    .mode button.active { background: var(--primary); color: white; border-color: var(--primary); }
+    #scanInput {
+      font-size: 22px;
+      padding: 14px;
+      text-align: center;
+      letter-spacing: .5px;
+      border: 2px solid var(--primary);
+    }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.35; margin: 8px 0 0; }
+    .status {
+      padding: 12px;
+      border-radius: 12px;
+      background: #eef2ff;
+      color: #312e81;
+      margin-top: 10px;
+      white-space: pre-line;
+    }
+    .status.ok { background: #ecfdf5; color: var(--ok); }
+    .status.bad { background: #fef2f2; color: var(--bad); }
+    .status.warn { background: #fffbeb; color: var(--warn); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #e5e7eb; padding: 9px 6px; vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+    .small { font-size: 12px; color: var(--muted); }
+    .pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #e5e7eb;
+    }
+    .pill.low { background: #fee2e2; color: #991b1b; }
+    .pill.ok { background: #dcfce7; color: #166534; }
+    .hidden { display: none !important; }
+    .footerbar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,.96);
+      border-top: 1px solid var(--border);
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      backdrop-filter: blur(10px);
+      z-index: 9;
+    }
+    .footerbar > div { max-width: 860px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 560px) {
+      .row, .row3 { grid-template-columns: 1fr; }
+      main { padding: 10px; padding-bottom: 96px; }
+      .card { border-radius: 14px; padding: 12px; }
+      th:nth-child(4), td:nth-child(4) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bestand Scanner</h1>
+    <p>Offline-Lagerverwaltung für iPhone + Bluetooth-Barcode-Scanner</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Scannen</h2>
+
+      <div class="mode">
+        <button id="modeOut" class="active" type="button">Warenausgang −</button>
+        <button id="modeIn" type="button">Wareneingang +</button>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="qty">Menge pro Scan</label>
+          <input id="qty" type="number" min="1" step="1" value="1">
+        </div>
+        <div>
+          <label for="autoClear">Verhalten</label>
+          <select id="autoClear">
+            <option value="auto">Nach Scan automatisch leeren</option>
+            <option value="manual">Barcode stehen lassen</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="scanInput">Barcode-Feld</label>
+      <input id="scanInput" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Hier scannen …">
+      <p class="hint">Tipp: Der Inateck-Scanner sollte nach dem Barcode „Enter“ senden. Dann wird automatisch gebucht.</p>
+      <div id="scanStatus" class="status">Bereit. Wähle Warenausgang oder Wareneingang und scanne einen Barcode.</div>
+    </section>
+
+    <section id="unknownCard" class="card hidden">
+      <h2>Unbekannten Artikel anlegen</h2>
+      <p class="hint">Dieser Barcode ist noch nicht bekannt. Lege den Artikel an, danach wird der Scan gebucht.</p>
+      <label for="newBarcode">Barcode</label>
+      <input id="newBarcode" autocomplete="off">
+      <label for="newName">Artikelname</label>
+      <input id="newName" placeholder="z. B. Schraube M6 x 20">
+      <div class="row">
+        <div>
+          <label for="newStock">Startbestand</label>
+          <input id="newStock" type="number" step="1" value="0">
+        </div>
+        <div>
+          <label for="newMin">Mindestbestand</label>
+          <input id="newMin" type="number" step="1" value="0">
+        </div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button id="saveUnknown" class="good" type="button">Artikel speichern & buchen</button>
+        <button id="cancelUnknown" class="secondary" type="button">Abbrechen</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Artikel anlegen / bearbeiten</h2>
+      <div class="row">
+        <div>
+          <label for="barcode">Barcode</label>
+          <input id="barcode" autocomplete="off" placeholder="Barcode scannen oder eintippen">
+        </div>
+        <div>
+          <label for="name">Artikelname</label>
+          <input id="name" autocomplete="off" placeholder="Artikelname">
+        </div>
+      </div>
+      <div class="row3">
+        <div>
+          <label for="stock">Bestand</label>
+          <input id="stock" type="number" step="1" value="0">
+        </div>
+        <div>
+          <label for="minStock">Mindestbestand</label>
+          <input id="minStock" type="number" step="1" value="0">
+        </div>
+        <div>
+          <label for="location">Lagerort</label>
+          <input id="location" placeholder="optional">
+        </div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button id="saveProduct" class="good" type="button">Speichern</button>
+        <button id="clearForm" class="secondary" type="button">Felder leeren</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3. Artikelliste</h2>
+      <input id="search" autocomplete="off" placeholder="Suchen nach Name, Barcode oder Lagerort …">
+      <p id="summary" class="hint"></p>
+      <div style="overflow:auto; margin-top:8px">
+        <table>
+          <thead>
+            <tr>
+              <th>Artikel</th>
+              <th>Bestand</th>
+              <th>Status</th>
+              <th>Lagerort</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="productRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>4. Import / Export / Backup</h2>
+      <p class="hint">CSV-Format für Import: barcode;name;bestand;mindestbestand;lagerort</p>
+      <div class="actions">
+        <button id="exportProducts" type="button">Artikel als CSV exportieren</button>
+        <button id="exportHistory" class="secondary" type="button">Historie als CSV exportieren</button>
+        <button id="importBtn" class="secondary" type="button">CSV importieren</button>
+      </div>
+      <input id="importFile" class="hidden" type="file" accept=".csv,text/csv,text/plain">
+      <div class="actions" style="margin-top:10px">
+        <button id="demoData" class="secondary" type="button">Demo-Artikel anlegen</button>
+        <button id="deleteAll" class="bad" type="button">Alle Daten löschen</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>5. Letzte Buchungen</h2>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Zeit</th>
+              <th>Artikel</th>
+              <th>Änderung</th>
+              <th>Bestand</th>
+            </tr>
+          </thead>
+          <tbody id="historyRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div class="footerbar">
+    <div>
+      <button id="focusScan" type="button">Scan-Feld aktivieren</button>
+      <button id="quickOut" class="secondary" type="button">Ausgang −</button>
+    </div>
+  </div>
+
+<script>
+const DB_NAME = "bestand-scanner-db";
+const DB_VERSION = 1;
+let db;
+let mode = "out";
+let pendingUnknownBarcode = null;
+
+const $ = (id) => document.getElementById(id);
+
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const database = req.result;
+      if (!database.objectStoreNames.contains("products")) {
+        const store = database.createObjectStore("products", { keyPath: "barcode" });
+        store.createIndex("name", "name", { unique: false });
+      }
+      if (!database.objectStoreNames.contains("history")) {
+        const hist = database.createObjectStore("history", { keyPath: "id", autoIncrement: true });
+        hist.createIndex("ts", "ts", { unique: false });
+        hist.createIndex("barcode", "barcode", { unique: false });
+      }
+    };
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function tx(store, mode = "readonly") {
+  return db.transaction(store, mode).objectStore(store);
+}
+
+function getProduct(barcode) {
+  return new Promise((resolve, reject) => {
+    const req = tx("products").get(barcode);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function putProduct(product) {
+  return new Promise((resolve, reject) => {
+    product.updatedAt = new Date().toISOString();
+    if (!product.createdAt) product.createdAt = product.updatedAt;
+    const req = tx("products", "readwrite").put(product);
+    req.onsuccess = () => resolve(product);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function deleteProduct(barcode) {
+  return new Promise((resolve, reject) => {
+    const req = tx("products", "readwrite").delete(barcode);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getAllProducts() {
+  return new Promise((resolve, reject) => {
+    const req = tx("products").getAll();
+    req.onsuccess = () => resolve((req.result || []).sort((a,b) => (a.name||"").localeCompare(b.name||"", "de")));
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function addHistory(entry) {
+  return new Promise((resolve, reject) => {
+    entry.ts = new Date().toISOString();
+    const req = tx("history", "readwrite").add(entry);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getRecentHistory(limit = 25) {
+  return new Promise((resolve, reject) => {
+    const rows = [];
+    const store = tx("history");
+    const index = store.index("ts");
+    const req = index.openCursor(null, "prev");
+    req.onsuccess = () => {
+      const cursor = req.result;
+      if (cursor && rows.length < limit) {
+        rows.push({ id: cursor.primaryKey, ...cursor.value });
+        cursor.continue();
+      } else {
+        resolve(rows);
+      }
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getAllHistory() {
+  return new Promise((resolve, reject) => {
+    const req = tx("history").getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function setStatus(message, type = "") {
+  const el = $("scanStatus");
+  el.className = "status" + (type ? " " + type : "");
+  el.textContent = message;
+}
+
+function setMode(nextMode) {
+  mode = nextMode;
+  $("modeOut").classList.toggle("active", mode === "out");
+  $("modeIn").classList.toggle("active", mode === "in");
+  $("quickOut").textContent = mode === "out" ? "Ausgang −" : "Eingang +";
+  $("quickOut").className = mode === "out" ? "secondary" : "good";
+  focusScanSoon();
+}
+
+function focusScanSoon() {
+  setTimeout(() => {
+    $("scanInput").focus();
+    $("scanInput").select();
+  }, 80);
+}
+
+function cleanBarcode(value) {
+  return (value || "").trim();
+}
+
+function intVal(id, fallback = 0) {
+  const n = parseInt($(id).value, 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+async function processBarcode(raw) {
+  const barcode = cleanBarcode(raw);
+  if (!barcode) return;
+
+  const qty = Math.max(1, intVal("qty", 1));
+  const delta = mode === "out" ? -qty : qty;
+  const product = await getProduct(barcode);
+
+  if (!product) {
+    pendingUnknownBarcode = barcode;
+    $("unknownCard").classList.remove("hidden");
+    $("newBarcode").value = barcode;
+    $("newName").value = "";
+    $("newStock").value = "0";
+    $("newMin").value = "0";
+    setStatus("Unbekannter Barcode: " + barcode + "\nBitte Artikel anlegen.", "warn");
+    setTimeout(() => $("newName").focus(), 100);
+    return;
+  }
+
+  const before = Number(product.stock || 0);
+  const after = before + delta;
+  product.stock = after;
+  await putProduct(product);
+  await addHistory({
+    barcode: product.barcode,
+    name: product.name,
+    delta,
+    before,
+    after,
+    action: mode === "out" ? "Warenausgang" : "Wareneingang"
+  });
+
+  setStatus(`${product.name}\n${mode === "out" ? "Warenausgang" : "Wareneingang"}: ${delta > 0 ? "+" : ""}${delta}\nBestand: ${before} → ${after}`, after < Number(product.minStock || 0) ? "warn" : "ok");
+
+  if ($("autoClear").value === "auto") $("scanInput").value = "";
+  await refresh();
+  focusScanSoon();
+}
+
+async function saveProductFromForm() {
+  const barcode = cleanBarcode($("barcode").value);
+  const name = $("name").value.trim();
+  if (!barcode || !name) {
+    alert("Bitte Barcode und Artikelname ausfüllen.");
+    return;
+  }
+  await putProduct({
+    barcode,
+    name,
+    stock: intVal("stock", 0),
+    minStock: intVal("minStock", 0),
+    location: $("location").value.trim()
+  });
+  clearProductForm();
+  setStatus("Artikel gespeichert: " + name, "ok");
+  await refresh();
+  focusScanSoon();
+}
+
+function clearProductForm() {
+  ["barcode","name","location"].forEach(id => $(id).value = "");
+  $("stock").value = "0";
+  $("minStock").value = "0";
+}
+
+function editProduct(product) {
+  $("barcode").value = product.barcode || "";
+  $("name").value = product.name || "";
+  $("stock").value = product.stock ?? 0;
+  $("minStock").value = product.minStock ?? 0;
+  $("location").value = product.location || "";
+  window.scrollTo({ top: $("barcode").getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
+}
+
+async function refresh() {
+  const products = await getAllProducts();
+  const query = $("search").value.trim().toLowerCase();
+  const filtered = products.filter(p => {
+    const s = `${p.barcode} ${p.name} ${p.location || ""}`.toLowerCase();
+    return !query || s.includes(query);
+  });
+
+  const low = products.filter(p => Number(p.stock || 0) < Number(p.minStock || 0)).length;
+  $("summary").textContent = `${products.length} Artikel gespeichert · ${low} unter Mindestbestand`;
+
+  const tbody = $("productRows");
+  tbody.innerHTML = "";
+  for (const p of filtered) {
+    const tr = document.createElement("tr");
+    const stock = Number(p.stock || 0);
+    const min = Number(p.minStock || 0);
+    const isLow = stock < min;
+    tr.innerHTML = `
+      <td><strong>${escapeHtml(p.name || "")}</strong><br><span class="small">${escapeHtml(p.barcode || "")}</span></td>
+      <td>${stock}</td>
+      <td><span class="pill ${isLow ? "low" : "ok"}">${isLow ? "niedrig" : "ok"}</span><br><span class="small">Min: ${min}</span></td>
+      <td>${escapeHtml(p.location || "")}</td>
+      <td><button class="secondary" data-edit="${escapeAttr(p.barcode)}" type="button">Bearbeiten</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  tbody.querySelectorAll("[data-edit]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const p = await getProduct(btn.getAttribute("data-edit"));
+      if (p) editProduct(p);
+    });
+  });
+
+  const hist = await getRecentHistory(25);
+  const htbody = $("historyRows");
+  htbody.innerHTML = "";
+  for (const h of hist) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${formatDate(h.ts)}</td>
+      <td><strong>${escapeHtml(h.name || "")}</strong><br><span class="small">${escapeHtml(h.barcode || "")}</span></td>
+      <td>${h.delta > 0 ? "+" : ""}${h.delta}</td>
+      <td>${h.before} → ${h.after}</td>
+    `;
+    htbody.appendChild(tr);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/`/g, "&#96;"); }
+function formatDate(iso) {
+  try { return new Date(iso).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }); }
+  catch { return iso || ""; }
+}
+
+function csvEscape(value) {
+  const s = String(value ?? "");
+  if (/[;\n\r"]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function downloadText(filename, text, type = "text/csv;charset=utf-8") {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function exportProductsCsv() {
+  const products = await getAllProducts();
+  const lines = ["barcode;name;bestand;mindestbestand;lagerort"];
+  for (const p of products) {
+    lines.push([p.barcode, p.name, p.stock, p.minStock, p.location || ""].map(csvEscape).join(";"));
+  }
+  downloadText("bestand-artikel.csv", lines.join("\n"));
+}
+
+async function exportHistoryCsv() {
+  const rows = await getAllHistory();
+  rows.sort((a,b) => (a.ts || "").localeCompare(b.ts || ""));
+  const lines = ["zeit;barcode;name;aktion;aenderung;bestand_vorher;bestand_nachher"];
+  for (const h of rows) {
+    lines.push([h.ts, h.barcode, h.name, h.action, h.delta, h.before, h.after].map(csvEscape).join(";"));
+  }
+  downloadText("bestand-historie.csv", lines.join("\n"));
+}
+
+function parseCsv(text) {
+  const delimiter = text.includes(";") ? ";" : (text.includes("\t") ? "\t" : ",");
+  const rows = [];
+  let row = [], cur = "", quoted = false;
+  for (let i=0; i<text.length; i++) {
+    const ch = text[i], next = text[i+1];
+    if (quoted) {
+      if (ch === '"' && next === '"') { cur += '"'; i++; }
+      else if (ch === '"') quoted = false;
+      else cur += ch;
+    } else {
+      if (ch === '"') quoted = true;
+      else if (ch === delimiter) { row.push(cur); cur = ""; }
+      else if (ch === "\n") { row.push(cur); rows.push(row); row = []; cur = ""; }
+      else if (ch !== "\r") cur += ch;
+    }
+  }
+  row.push(cur);
+  if (row.some(x => x.trim() !== "")) rows.push(row);
+  return rows;
+}
+
+async function importCsv(file) {
+  const text = await file.text();
+  const rows = parseCsv(text);
+  if (!rows.length) return alert("CSV ist leer.");
+
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  const hasHeader = header.includes("barcode") || header.includes("name") || header.includes("bestand");
+  const dataRows = hasHeader ? rows.slice(1) : rows;
+
+  const idx = (names, fallback) => {
+    for (const n of names) {
+      const i = header.indexOf(n);
+      if (i >= 0) return i;
+    }
+    return fallback;
+  };
+
+  const barcodeI = hasHeader ? idx(["barcode", "ean", "code"], 0) : 0;
+  const nameI = hasHeader ? idx(["name", "artikel", "artikelname", "bezeichnung"], 1) : 1;
+  const stockI = hasHeader ? idx(["bestand", "stock", "menge"], 2) : 2;
+  const minI = hasHeader ? idx(["mindestbestand", "minstock", "minimum"], 3) : 3;
+  const locI = hasHeader ? idx(["lagerort", "location", "ort"], 4) : 4;
+
+  let count = 0;
+  for (const r of dataRows) {
+    const barcode = cleanBarcode(r[barcodeI]);
+    const name = (r[nameI] || "").trim();
+    if (!barcode || !name) continue;
+    const old = await getProduct(barcode);
+    await putProduct({
+      ...(old || {}),
+      barcode,
+      name,
+      stock: parseInt(r[stockI], 10) || 0,
+      minStock: parseInt(r[minI], 10) || 0,
+      location: (r[locI] || "").trim()
+    });
+    count++;
+  }
+  setStatus(`${count} Artikel importiert/aktualisiert.`, "ok");
+  await refresh();
+}
+
+async function addDemoData() {
+  const items = [
+    { barcode: "4012345678901", name: "Demo Schraube M6 x 20", stock: 42, minStock: 10, location: "Regal A1" },
+    { barcode: "4012345678902", name: "Demo Mutter M6", stock: 8, minStock: 20, location: "Regal A2" },
+    { barcode: "4012345678903", name: "Demo Unterlegscheibe", stock: 120, minStock: 30, location: "Regal A3" }
+  ];
+  for (const item of items) await putProduct(item);
+  setStatus("Demo-Artikel angelegt. Du kannst jetzt 4012345678901 scannen/eintippen und Enter drücken.", "ok");
+  await refresh();
+}
+
+async function deleteAllData() {
+  if (!confirm("Wirklich ALLE Artikel und die Historie löschen? Vorher am besten CSV exportieren.")) return;
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction(["products", "history"], "readwrite");
+    transaction.objectStore("products").clear();
+    transaction.objectStore("history").clear();
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
+  setStatus("Alle Daten gelöscht.", "warn");
+  await refresh();
+}
+
+async function saveUnknownAndBook() {
+  const barcode = cleanBarcode($("newBarcode").value);
+  const name = $("newName").value.trim();
+  if (!barcode || !name) return alert("Bitte Barcode und Artikelname ausfüllen.");
+  await putProduct({
+    barcode,
+    name,
+    stock: intVal("newStock", 0),
+    minStock: intVal("newMin", 0),
+    location: ""
+  });
+  $("unknownCard").classList.add("hidden");
+  $("scanInput").value = barcode;
+  await processBarcode(barcode);
+  pendingUnknownBarcode = null;
+}
+
+function bindEvents() {
+  $("modeOut").addEventListener("click", () => setMode("out"));
+  $("modeIn").addEventListener("click", () => setMode("in"));
+  $("quickOut").addEventListener("click", () => setMode(mode === "out" ? "in" : "out"));
+  $("focusScan").addEventListener("click", focusScanSoon);
+
+  $("scanInput").addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      await processBarcode(e.target.value);
+    }
+  });
+
+  $("saveProduct").addEventListener("click", saveProductFromForm);
+  $("clearForm").addEventListener("click", () => { clearProductForm(); focusScanSoon(); });
+  $("search").addEventListener("input", refresh);
+  $("exportProducts").addEventListener("click", exportProductsCsv);
+  $("exportHistory").addEventListener("click", exportHistoryCsv);
+  $("importBtn").addEventListener("click", () => $("importFile").click());
+  $("importFile").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (file) await importCsv(file);
+    e.target.value = "";
+  });
+  $("demoData").addEventListener("click", addDemoData);
+  $("deleteAll").addEventListener("click", deleteAllData);
+  $("saveUnknown").addEventListener("click", saveUnknownAndBook);
+  $("cancelUnknown").addEventListener("click", () => {
+    $("unknownCard").classList.add("hidden");
+    pendingUnknownBarcode = null;
+    focusScanSoon();
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) focusScanSoon();
+  });
+}
+
+async function init() {
+  if (!("indexedDB" in window)) {
+    setStatus("Fehler: IndexedDB wird in diesem Browser nicht unterstützt.", "bad");
+    return;
+  }
+
+  try {
+    await openDb();
+    bindEvents();
+    await refresh();
+    setStatus("Bereit. Daten werden lokal auf diesem Gerät gespeichert.", "ok");
+    focusScanSoon();
+
+    if ("serviceWorker" in navigator) {
+      try { await navigator.serviceWorker.register("./sw.js"); }
+      catch (err) { console.warn("Service Worker konnte nicht registriert werden:", err); }
+    }
+  } catch (err) {
+    console.error(err);
+    setStatus("Startfehler: " + (err.message || err), "bad");
+  }
+}
+
+init();
+</script>
+</body>
+</html>
