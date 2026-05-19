@@ -1,26 +1,22 @@
-# Bestand Scanner PWA v1
-
-Eine kleine Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
-
-## Funktionen
-
-- Artikel anlegen: Barcode, Name, Bestand, Mindestbestand, Lagerort
-- Warenausgang: Scan reduziert Bestand
-- Wareneingang: Scan erhöht Bestand
-- Unbekannte Barcodes direkt als neuen Artikel anlegen
-- Artikelsuche
-- CSV-Import und CSV-Export
-- Buchungshistorie
-- Offlinefähig nach Installation auf dem Home-Bildschirm
-
-## CSV-Importformat
-
-Empfohlen mit Semikolon:
-
-barcode;name;bestand;mindestbestand;lagerort
-4012345678901;Schraube M6 x 20;50;10;Regal A1
-
-## Wichtig
-
-Die Produktdaten werden lokal im Browser auf dem iPhone gespeichert.
-Bitte regelmäßig über "Artikel als CSV exportieren" sichern.
+{
+  "name": "Bestand Scanner",
+  "short_name": "Bestand",
+  "description": "Offline-Bestandsverwaltung v2 mit Barcode-Scanner",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#1f2937",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
