@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3</title>
+  <title>Bestand Scanner v3.1</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -244,7 +244,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3: Barcode · Bestand · Bild</p>
+    <p>Offline-Lagerverwaltung v3.1: Barcode · Bestand · Bild</p>
   </header>
 
   <main>
@@ -381,6 +381,7 @@
     </div>
   </div>
 
+<script src="qrcode.bundle.js"></script>
 <script>
 const DB_NAME = "bestand-scanner-db";
 const DB_VERSION = 1;
@@ -919,312 +920,41 @@ async function renderLabels(products) {
   window.scrollTo({ top: $("labelsCard").getBoundingClientRect().top + window.scrollY - 100, behavior: "smooth" });
 }
 
-/* Minimaler QR-Code-Generator für kurze Artikelnummern.
-   Unterstützt Byte Mode, Version 1-4, Fehlerkorrektur L, ein Datenblock. */
 function drawQrCode(canvas, text) {
-  const qr = makeQr(text);
-  const scale = 8;
-  const border = 4;
-  const size = qr.size + border * 2;
-  canvas.width = size * scale;
-  canvas.height = size * scale;
-  const ctx = canvas.getContext("2d");
-  ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#000";
-  for (let y=0; y<qr.size; y++) {
-    for (let x=0; x<qr.size; x++) {
-      if (qr.modules[y][x]) ctx.fillRect((x + border) * scale, (y + border) * scale, scale, scale);
+  if (!window.QRCode || typeof window.QRCode.toCanvas !== "function") {
+    const ctx = canvas.getContext("2d");
+    canvas.width = 220;
+    canvas.height = 220;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#000";
+    ctx.font = "14px Arial";
+    ctx.fillText("QR-Bibliothek fehlt", 18, 110);
+    console.error("QRCode-Bibliothek nicht geladen.");
+    return;
+  }
+
+  window.QRCode.toCanvas(canvas, String(text), {
+    errorCorrectionLevel: "M",
+    margin: 2,
+    width: 220,
+    color: {
+      dark: "#000000",
+      light: "#ffffff"
     }
-  }
-}
-
-function makeQr(text) {
-  const bytes = Array.from(new TextEncoder().encode(text));
-  const configs = [
-    { v: 1, size: 21, data: 19, ecc: 7, cap: 17, align: [] },
-    { v: 2, size: 25, data: 34, ecc: 10, cap: 32, align: [18] },
-    { v: 3, size: 29, data: 55, ecc: 15, cap: 53, align: [22] },
-    { v: 4, size: 33, data: 80, ecc: 20, cap: 78, align: [26] }
-  ];
-  const cfg = configs.find(c => bytes.length <= c.cap) || configs[configs.length - 1];
-  if (bytes.length > cfg.cap) throw new Error("QR-Text ist zu lang für diese Version.");
-
-  const dataCodewords = makeDataCodewords(bytes, cfg.data);
-  const ecc = reedSolomonCompute(dataCodewords, cfg.ecc);
-  const codewords = dataCodewords.concat(ecc);
-
-  let best = null;
-  for (let mask=0; mask<8; mask++) {
-    const base = createBaseMatrix(cfg);
-    placeData(base.modules, base.reserved, codewords, mask);
-    drawFormat(base.modules, base.reserved, mask, cfg.size);
-    const penalty = getPenalty(base.modules);
-    if (!best || penalty < best.penalty) best = { modules: base.modules, penalty };
-  }
-  return { size: cfg.size, modules: best.modules };
-}
-
-function makeDataCodewords(bytes, dataLen) {
-  const bits = [];
-  const push = (val, len) => { for (let i=len-1; i>=0; i--) bits.push((val >>> i) & 1); };
-  push(0b0100, 4);              // Byte mode
-  push(bytes.length, 8);         // char count for version 1-9
-  for (const b of bytes) push(b, 8);
-  const maxBits = dataLen * 8;
-  const terminator = Math.min(4, maxBits - bits.length);
-  for (let i=0; i<terminator; i++) bits.push(0);
-  while (bits.length % 8) bits.push(0);
-  const data = [];
-  for (let i=0; i<bits.length; i += 8) {
-    let b = 0;
-    for (let j=0; j<8; j++) b = (b << 1) | bits[i+j];
-    data.push(b);
-  }
-  let pad = 0;
-  while (data.length < dataLen) {
-    data.push(pad % 2 === 0 ? 0xec : 0x11);
-    pad++;
-  }
-  return data;
-}
-
-function createBaseMatrix(cfg) {
-  const size = cfg.size;
-  const modules = Array.from({ length: size }, () => Array(size).fill(false));
-  const reserved = Array.from({ length: size }, () => Array(size).fill(false));
-  const set = (x,y,dark=true) => {
-    if (x < 0 || y < 0 || x >= size || y >= size) return;
-    modules[y][x] = !!dark;
-    reserved[y][x] = true;
-  };
-
-  drawFinder(set, 0, 0);
-  drawFinder(set, size - 7, 0);
-  drawFinder(set, 0, size - 7);
-
-  // Separators
-  for (let i=0; i<8; i++) {
-    set(7, i, false); set(i, 7, false);
-    set(size-8, i, false); set(size-8+i, 7, false);
-    set(7, size-8+i, false); set(i, size-8, false);
-  }
-
-  // Timing
-  for (let i=8; i<size-8; i++) {
-    set(i, 6, i % 2 === 0);
-    set(6, i, i % 2 === 0);
-  }
-
-  // Alignment pattern for versions 2-4
-  if (cfg.align.length) drawAlignment(set, cfg.align[0], cfg.align[0]);
-
-  // Reserve format info areas
-  for (let i=0; i<9; i++) {
-    if (i !== 6) { set(8, i, false); set(i, 8, false); }
-  }
-  for (let i=0; i<8; i++) {
-    set(size-1-i, 8, false);
-    set(8, size-1-i, false);
-  }
-
-  // Dark module
-  set(8, 4 * cfg.v + 9, true);
-
-  return { modules, reserved };
-}
-
-function drawFinder(set, x, y) {
-  for (let dy=0; dy<7; dy++) {
-    for (let dx=0; dx<7; dx++) {
-      const xx = x + dx, yy = y + dy;
-      const dark = dx === 0 || dx === 6 || dy === 0 || dy === 6 || (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4);
-      set(xx, yy, dark);
+  }, (err) => {
+    if (err) {
+      console.error("QR-Code konnte nicht erzeugt werden:", err);
+      const ctx = canvas.getContext("2d");
+      canvas.width = 220;
+      canvas.height = 220;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#000";
+      ctx.font = "14px Arial";
+      ctx.fillText("QR-Fehler", 75, 110);
     }
-  }
-}
-
-function drawAlignment(set, cx, cy) {
-  for (let dy=-2; dy<=2; dy++) {
-    for (let dx=-2; dx<=2; dx++) {
-      const dark = Math.max(Math.abs(dx), Math.abs(dy)) !== 1;
-      set(cx + dx, cy + dy, dark);
-    }
-  }
-}
-
-function placeData(modules, reserved, codewords, mask) {
-  const size = modules.length;
-  const bits = [];
-  for (const cw of codewords) {
-    for (let i=7; i>=0; i--) bits.push((cw >>> i) & 1);
-  }
-
-  let bitIndex = 0;
-  let upward = true;
-  for (let right = size - 1; right >= 1; right -= 2) {
-    if (right === 6) right--;
-    for (let vert = 0; vert < size; vert++) {
-      const y = upward ? size - 1 - vert : vert;
-      for (let j=0; j<2; j++) {
-        const x = right - j;
-        if (!reserved[y][x]) {
-          let dark = bitIndex < bits.length ? bits[bitIndex] === 1 : false;
-          if (maskBit(mask, x, y)) dark = !dark;
-          modules[y][x] = dark;
-          bitIndex++;
-        }
-      }
-    }
-    upward = !upward;
-  }
-}
-
-function maskBit(mask, x, y) {
-  switch (mask) {
-    case 0: return (x + y) % 2 === 0;
-    case 1: return y % 2 === 0;
-    case 2: return x % 3 === 0;
-    case 3: return (x + y) % 3 === 0;
-    case 4: return (Math.floor(y / 2) + Math.floor(x / 3)) % 2 === 0;
-    case 5: return ((x * y) % 2 + (x * y) % 3) === 0;
-    case 6: return (((x * y) % 2 + (x * y) % 3) % 2) === 0;
-    case 7: return (((x + y) % 2 + (x * y) % 3) % 2) === 0;
-  }
-  return false;
-}
-
-function drawFormat(modules, reserved, mask, size) {
-  const eccLevelL = 1; // Format bits for EC level L: 01
-  const data = (eccLevelL << 3) | mask;
-  let rem = data;
-  for (let i=0; i<10; i++) rem = (rem << 1) ^ (((rem >>> 9) & 1) * 0x537);
-  const bits = ((data << 10) | rem) ^ 0x5412;
-  const get = i => ((bits >>> i) & 1) !== 0;
-
-  const set = (x,y,dark) => {
-    modules[y][x] = dark;
-    reserved[y][x] = true;
-  };
-
-  for (let i=0; i<=5; i++) set(8, i, get(i));
-  set(8, 7, get(6));
-  set(8, 8, get(7));
-  set(7, 8, get(8));
-  for (let i=9; i<15; i++) set(14 - i, 8, get(i));
-
-  for (let i=0; i<8; i++) set(size - 1 - i, 8, get(i));
-  for (let i=8; i<15; i++) set(8, size - 15 + i, get(i));
-  set(8, size - 8, true);
-}
-
-const EXP = new Array(512);
-const LOG = new Array(256);
-(function initGf() {
-  let x = 1;
-  for (let i=0; i<255; i++) {
-    EXP[i] = x;
-    LOG[x] = i;
-    x <<= 1;
-    if (x & 0x100) x ^= 0x11d;
-  }
-  for (let i=255; i<512; i++) EXP[i] = EXP[i - 255];
-})();
-
-function gfMul(x, y) {
-  if (x === 0 || y === 0) return 0;
-  return EXP[LOG[x] + LOG[y]];
-}
-
-function reedSolomonGenerator(degree) {
-  let poly = [1];
-  for (let i=0; i<degree; i++) {
-    const next = Array(poly.length + 1).fill(0);
-    for (let j=0; j<poly.length; j++) {
-      next[j] ^= gfMul(poly[j], EXP[i]);
-      next[j + 1] ^= poly[j];
-    }
-    poly = next;
-  }
-  return poly;
-}
-
-function reedSolomonCompute(data, degree) {
-  const gen = reedSolomonGenerator(degree);
-  const result = Array(degree).fill(0);
-  for (const b of data) {
-    const factor = b ^ result.shift();
-    result.push(0);
-    for (let i=0; i<degree; i++) result[i] ^= gfMul(gen[i], factor);
-  }
-  return result;
-}
-
-function getPenalty(m) {
-  const size = m.length;
-  let penalty = 0;
-
-  // Adjacent modules in row/column
-  for (let y=0; y<size; y++) {
-    let runColor = m[y][0], runLen = 1;
-    for (let x=1; x<size; x++) {
-      if (m[y][x] === runColor) runLen++;
-      else {
-        if (runLen >= 5) penalty += 3 + (runLen - 5);
-        runColor = m[y][x]; runLen = 1;
-      }
-    }
-    if (runLen >= 5) penalty += 3 + (runLen - 5);
-  }
-  for (let x=0; x<size; x++) {
-    let runColor = m[0][x], runLen = 1;
-    for (let y=1; y<size; y++) {
-      if (m[y][x] === runColor) runLen++;
-      else {
-        if (runLen >= 5) penalty += 3 + (runLen - 5);
-        runColor = m[y][x]; runLen = 1;
-      }
-    }
-    if (runLen >= 5) penalty += 3 + (runLen - 5);
-  }
-
-  // 2x2 blocks
-  for (let y=0; y<size-1; y++) {
-    for (let x=0; x<size-1; x++) {
-      const c = m[y][x];
-      if (c === m[y][x+1] && c === m[y+1][x] && c === m[y+1][x+1]) penalty += 3;
-    }
-  }
-
-  // Finder-like patterns
-  const pattern = [true,false,true,true,true,false,true];
-  for (let y=0; y<size; y++) {
-    for (let x=0; x<=size-7; x++) {
-      if (pattern.every((v,i) => m[y][x+i] === v)) {
-        const left = x >= 4 && !m[y][x-1] && !m[y][x-2] && !m[y][x-3] && !m[y][x-4];
-        const right = x + 11 <= size && !m[y][x+7] && !m[y][x+8] && !m[y][x+9] && !m[y][x+10];
-        if (left || right) penalty += 40;
-      }
-    }
-  }
-  for (let x=0; x<size; x++) {
-    for (let y=0; y<=size-7; y++) {
-      if (pattern.every((v,i) => m[y+i][x] === v)) {
-        const up = y >= 4 && !m[y-1][x] && !m[y-2][x] && !m[y-3][x] && !m[y-4][x];
-        const down = y + 11 <= size && !m[y+7][x] && !m[y+8][x] && !m[y+9][x] && !m[y+10][x];
-        if (up || down) penalty += 40;
-      }
-    }
-  }
-
-  // Balance
-  let dark = 0;
-  for (let y=0; y<size; y++) for (let x=0; x<size; x++) if (m[y][x]) dark++;
-  const total = size * size;
-  const k = Math.ceil(Math.abs(dark * 20 - total * 10) / total) - 1;
-  penalty += k * 10;
-  return penalty;
+  });
 }
 
 function bindEvents() {
@@ -1299,7 +1029,7 @@ async function init() {
     bindEvents();
     loadSettings();
     await refresh();
-    setStatus("Bereit. Version 3 ist aktiv. Bilddaten werden direkt im Artikeldatensatz gespeichert.", "ok");
+    setStatus("Bereit. Version 3.1 ist aktiv. QR-Codes werden jetzt mit zuverlässiger lokaler QR-Bibliothek erzeugt.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {

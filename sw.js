@@ -1,8 +1,9 @@
-const CACHE_NAME = "bestand-scanner-v3";
+const CACHE_NAME = "bestand-scanner-v31";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./qrcode.bundle.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
 ];
