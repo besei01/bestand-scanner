@@ -1,0 +1,1318 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f2937">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Bestand">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Bestand Scanner v3</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --primary: #1f2937;
+      --primaryText: #ffffff;
+      --ok: #065f46;
+      --bad: #991b1b;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--primary);
+      color: white;
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 4px 0 0; font-size: 13px; opacity: .85; }
+    main { max-width: 900px; margin: 0 auto; padding: 14px; padding-bottom: 112px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 12px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    h2 { font-size: 17px; margin: 0 0 12px; }
+    label { display: block; font-weight: 650; font-size: 13px; margin: 10px 0 5px; }
+    input, select, button, textarea {
+      font: inherit;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 11px 12px;
+      width: 100%;
+      background: white;
+      color: var(--text);
+    }
+    button {
+      cursor: pointer;
+      border: 0;
+      background: var(--primary);
+      color: var(--primaryText);
+      font-weight: 700;
+    }
+    button.secondary { background: #e5e7eb; color: #111827; border: 1px solid var(--border); }
+    button.good { background: #047857; }
+    button.bad { background: #b91c1c; }
+    button.warn { background: #b45309; }
+    button:disabled { opacity: .5; cursor: default; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .actions button { flex: 1; min-width: 120px; }
+    .mode {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .mode button { background: #e5e7eb; color: #111827; border: 1px solid var(--border); }
+    .mode button.active { background: var(--primary); color: white; border-color: var(--primary); }
+    #scanInput {
+      font-size: 22px;
+      padding: 14px;
+      text-align: center;
+      letter-spacing: .5px;
+      border: 2px solid var(--primary);
+    }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.35; margin: 8px 0 0; }
+    .status {
+      padding: 12px;
+      border-radius: 12px;
+      background: #eef2ff;
+      color: #312e81;
+      margin-top: 10px;
+      white-space: pre-line;
+    }
+    .status.ok { background: #ecfdf5; color: var(--ok); }
+    .status.bad { background: #fef2f2; color: var(--bad); }
+    .status.warn { background: #fffbeb; color: var(--warn); }
+    .checkrow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 0;
+      font-weight: 650;
+      font-size: 13px;
+      margin: 0;
+    }
+    .checkrow input {
+      width: auto;
+      margin: 0;
+      transform: scale(1.15);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #e5e7eb; padding: 9px 6px; vertical-align: middle; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+    .small { font-size: 12px; color: var(--muted); }
+    .thumb {
+      width: 58px;
+      height: 58px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+      background: #f9fafb;
+      display: block;
+    }
+    .empty-thumb {
+      width: 58px;
+      height: 58px;
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      background: #f9fafb;
+    }
+    .stockbox {
+      font-size: 22px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .hidden { display: none !important; }
+    .footerbar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,.96);
+      border-top: 1px solid var(--border);
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      backdrop-filter: blur(10px);
+      z-index: 9;
+    }
+    .footerbar > div { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    #imagePreview {
+      width: 100px;
+      height: 100px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+      background: #f9fafb;
+      display: none;
+      margin-top: 8px;
+    }
+    .qr-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .label-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      background: white;
+      text-align: center;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .label-card canvas {
+      width: 112px;
+      height: 112px;
+      image-rendering: pixelated;
+    }
+    .label-code {
+      margin-top: 6px;
+      font-weight: 800;
+      font-size: 13px;
+      word-break: break-all;
+    }
+    .label-stock {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    @media (max-width: 560px) {
+      .row, .row3 { grid-template-columns: 1fr; }
+      main { padding: 10px; padding-bottom: 120px; }
+      .card { border-radius: 14px; padding: 12px; }
+      .footerbar > div { grid-template-columns: 1fr; }
+      th:nth-child(4), td:nth-child(4) { display: none; }
+    }
+    @media print {
+      header, main > section:not(#labelsCard), .footerbar { display: none !important; }
+      body { background: white; }
+      main { max-width: none; padding: 0; }
+      #labelsCard {
+        display: block !important;
+        border: none;
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+      }
+      #labelsCard h2, #labelsCard .no-print { display: none !important; }
+      .qr-wrap {
+        display: grid;
+        grid-template-columns: repeat(3, 45mm);
+        gap: 6mm;
+        margin: 0;
+      }
+      .label-card {
+        width: 45mm;
+        min-height: 55mm;
+        border: 1px solid #999;
+        border-radius: 0;
+        padding: 4mm;
+      }
+      .label-card canvas {
+        width: 32mm;
+        height: 32mm;
+      }
+      .label-code { font-size: 10pt; }
+      .label-stock { font-size: 8pt; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bestand Scanner</h1>
+    <p>Offline-Lagerverwaltung v3: Barcode · Bestand · Bild</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Scannen</h2>
+
+      <div class="mode">
+        <button id="modeOut" class="active" type="button">Warenausgang −</button>
+        <button id="modeIn" type="button">Wareneingang +</button>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="qty">Menge pro Scan</label>
+          <input id="qty" type="number" min="1" step="1" value="1">
+        </div>
+        <div>
+          <label for="scanKeyboard">Scan-Feld</label>
+          <select id="scanKeyboard">
+            <option value="scanner">Scanner-Modus: Tastatur aus</option>
+            <option value="manual">Manuell: Tastatur erlauben</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <label class="checkrow"><input id="doubleScanGuard" type="checkbox" checked> Gleichen Barcode kurz ignorieren</label>
+        <label class="checkrow"><input id="preventNegative" type="checkbox" checked> Bestand nicht unter 0 buchen</label>
+      </div>
+
+      <label for="scanInput">Barcode / Artikelnummer</label>
+      <input id="scanInput" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Hier scannen …">
+      <p class="hint">Der Scanner sollte nach dem Code „Enter“ senden. QR-Codes werden aus der Artikelnummer erzeugt, aber nicht gespeichert.</p>
+      <div id="scanStatus" class="status">Bereit. Daten werden lokal auf diesem Gerät gespeichert.</div>
+    </section>
+
+    <section id="unknownCard" class="card hidden">
+      <h2>Unbekannten Artikel anlegen</h2>
+      <p class="hint">Dieser Code ist noch nicht bekannt. Lege den Artikel an, danach wird der Scan gebucht.</p>
+      <label for="unknownBarcode">Artikelnummer / Barcode</label>
+      <input id="unknownBarcode" autocomplete="off">
+      <label for="unknownStock">Startbestand</label>
+      <input id="unknownStock" type="number" step="1" value="0">
+      <label for="unknownImage">Bild optional, JPG 100 × 100 Pixel</label>
+      <input id="unknownImage" type="file" accept="image/jpeg,image/jpg">
+      <div class="actions" style="margin-top:12px">
+        <button id="saveUnknown" class="good" type="button">Speichern & buchen</button>
+        <button id="cancelUnknown" class="secondary" type="button">Abbrechen</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2. Artikel anlegen / bearbeiten</h2>
+      <div class="row">
+        <div>
+          <label for="barcode">Artikelnummer / Barcode</label>
+          <input id="barcode" autocomplete="off" placeholder="z. B. ART-000123">
+        </div>
+        <div>
+          <label for="stock">Bestand</label>
+          <input id="stock" type="number" step="1" value="0">
+        </div>
+      </div>
+
+      <label for="imageFile">Bild, JPG 100 × 100 Pixel</label>
+      <input id="imageFile" type="file" accept="image/jpeg,image/jpg">
+      <img id="imagePreview" alt="Bildvorschau">
+      <input id="currentImage" type="hidden">
+
+      <div class="actions" style="margin-top:12px">
+        <button id="saveProduct" class="good" type="button">Artikel speichern</button>
+        <button id="clearForm" class="secondary" type="button">Felder leeren</button>
+        <button id="removeImage" class="secondary" type="button">Bild entfernen</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3. Artikelliste</h2>
+      <input id="search" autocomplete="off" placeholder="Suchen nach Artikelnummer / Barcode …">
+      <p id="summary" class="hint"></p>
+      <div style="overflow:auto; margin-top:8px">
+        <table>
+          <thead>
+            <tr>
+              <th>Bild</th>
+              <th>Artikelnummer / Barcode</th>
+              <th>Bestand</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody id="productRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="labelsCard" class="card">
+      <h2>4. QR-Codes / Etiketten</h2>
+      <div class="no-print">
+        <p class="hint">QR-Codes werden live aus der Artikelnummer erzeugt und nicht in der Datenbank gespeichert.</p>
+        <div class="actions">
+          <button id="showAllLabels" type="button">Alle QR-Codes anzeigen</button>
+          <button id="printLabels" class="secondary" type="button">Drucken</button>
+          <button id="hideLabels" class="secondary" type="button">QR-Codes ausblenden</button>
+        </div>
+      </div>
+      <div id="labels" class="qr-wrap hidden"></div>
+    </section>
+
+    <section class="card">
+      <h2>5. Sicherung / Import</h2>
+      <p class="hint">CSV enthält nur Artikelnummer und Bestand. Das Vollbackup enthält zusätzlich die Bilder.</p>
+      <div class="actions">
+        <button id="exportCsv" type="button">CSV exportieren</button>
+        <button id="importCsvBtn" class="secondary" type="button">CSV importieren</button>
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button id="exportFull" class="good" type="button">Vollbackup mit Bildern exportieren</button>
+        <button id="importFullBtn" class="secondary" type="button">Vollbackup wiederherstellen</button>
+      </div>
+      <input id="importCsvFile" class="hidden" type="file" accept=".csv,text/csv,text/plain">
+      <input id="importFullFile" class="hidden" type="file" accept=".json,application/json">
+      <div class="actions" style="margin-top:10px">
+        <button id="demoData" class="secondary" type="button">Demo-Artikel anlegen</button>
+        <button id="deleteAll" class="bad" type="button">Alle Artikel löschen</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="footerbar">
+    <div>
+      <button id="focusScan" type="button">Scan-Feld aktivieren</button>
+      <button id="quickMode" class="secondary" type="button">Ausgang −</button>
+      <button id="keyboardToggle" class="secondary" type="button">Tastatur an</button>
+    </div>
+  </div>
+
+<script>
+const DB_NAME = "bestand-scanner-db";
+const DB_VERSION = 1;
+let db;
+let mode = "out";
+let lastScanBarcode = "";
+let lastScanAt = 0;
+
+const $ = (id) => document.getElementById(id);
+
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const database = req.result;
+      if (!database.objectStoreNames.contains("products")) {
+        const store = database.createObjectStore("products", { keyPath: "barcode" });
+        store.createIndex("barcode", "barcode", { unique: true });
+      }
+      if (!database.objectStoreNames.contains("history")) {
+        database.createObjectStore("history", { keyPath: "id", autoIncrement: true });
+      }
+    };
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function tx(store, mode = "readonly") {
+  return db.transaction(store, mode).objectStore(store);
+}
+
+function getProduct(barcode) {
+  return new Promise((resolve, reject) => {
+    const req = tx("products").get(barcode);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function putProduct(product) {
+  return new Promise((resolve, reject) => {
+    const now = new Date().toISOString();
+    const clean = {
+      barcode: String(product.barcode || "").trim(),
+      stock: Number(product.stock || 0),
+      image: product.image || "",
+      updatedAt: now,
+      createdAt: product.createdAt || now
+    };
+    const req = tx("products", "readwrite").put(clean);
+    req.onsuccess = () => resolve(clean);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function deleteProduct(barcode) {
+  return new Promise((resolve, reject) => {
+    const req = tx("products", "readwrite").delete(barcode);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getAllProducts() {
+  return new Promise((resolve, reject) => {
+    const req = tx("products").getAll();
+    req.onsuccess = () => {
+      const rows = (req.result || []).map(p => ({
+        barcode: String(p.barcode || "").trim(),
+        stock: Number(p.stock || 0),
+        image: p.image || "",
+        createdAt: p.createdAt || "",
+        updatedAt: p.updatedAt || ""
+      })).filter(p => p.barcode);
+      rows.sort((a,b) => a.barcode.localeCompare(b.barcode, "de", { numeric: true }));
+      resolve(rows);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function clearAllProducts() {
+  return new Promise((resolve, reject) => {
+    const req = tx("products", "readwrite").clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function setStatus(message, type = "") {
+  const el = $("scanStatus");
+  el.className = "status" + (type ? " " + type : "");
+  el.textContent = message;
+}
+
+function setMode(nextMode) {
+  mode = nextMode;
+  $("modeOut").classList.toggle("active", mode === "out");
+  $("modeIn").classList.toggle("active", mode === "in");
+  $("quickMode").textContent = mode === "out" ? "Ausgang −" : "Eingang +";
+  $("quickMode").className = mode === "out" ? "secondary" : "good";
+  focusScanSoon();
+}
+
+function focusScanSoon() {
+  setTimeout(() => {
+    $("scanInput").focus();
+    $("scanInput").select();
+  }, 80);
+}
+
+function cleanBarcode(value) {
+  return String(value || "").trim();
+}
+
+function intVal(id, fallback = 0) {
+  const n = parseInt($(id).value, 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("bestand-scanner-settings-v3") || "{}");
+    if (saved.scanKeyboard) $("scanKeyboard").value = saved.scanKeyboard;
+    if (saved.doubleScanGuard !== undefined) $("doubleScanGuard").checked = !!saved.doubleScanGuard;
+    if (saved.preventNegative !== undefined) $("preventNegative").checked = !!saved.preventNegative;
+  } catch (err) {
+    console.warn("Einstellungen konnten nicht geladen werden:", err);
+  }
+  applyScanKeyboardMode();
+}
+
+function saveSettings() {
+  const settings = {
+    scanKeyboard: $("scanKeyboard").value,
+    doubleScanGuard: $("doubleScanGuard").checked,
+    preventNegative: $("preventNegative").checked
+  };
+  localStorage.setItem("bestand-scanner-settings-v3", JSON.stringify(settings));
+  applyScanKeyboardMode();
+}
+
+function applyScanKeyboardMode() {
+  const scanInput = $("scanInput");
+  const isScannerMode = $("scanKeyboard").value === "scanner";
+  if (isScannerMode) {
+    scanInput.setAttribute("inputmode", "none");
+    $("keyboardToggle").textContent = "Tastatur an";
+  } else {
+    scanInput.removeAttribute("inputmode");
+    $("keyboardToggle").textContent = "Scanner-Modus";
+  }
+}
+
+function toggleKeyboardMode() {
+  $("scanKeyboard").value = $("scanKeyboard").value === "scanner" ? "manual" : "scanner";
+  saveSettings();
+  focusScanSoon();
+}
+
+function isDuplicateScan(barcode) {
+  if (!$("doubleScanGuard").checked) return false;
+  const now = Date.now();
+  return barcode === lastScanBarcode && (now - lastScanAt) < 2000;
+}
+
+function rememberScan(barcode) {
+  lastScanBarcode = barcode;
+  lastScanAt = Date.now();
+}
+
+async function processBarcode(raw) {
+  const barcode = cleanBarcode(raw);
+  if (!barcode) return;
+
+  if (isDuplicateScan(barcode)) {
+    setStatus(`Doppelscan ignoriert: ${barcode}`, "warn");
+    $("scanInput").value = "";
+    focusScanSoon();
+    return;
+  }
+  rememberScan(barcode);
+
+  const qty = Math.max(1, intVal("qty", 1));
+  const delta = mode === "out" ? -qty : qty;
+  const product = await getProduct(barcode);
+
+  if (!product) {
+    $("unknownCard").classList.remove("hidden");
+    $("unknownBarcode").value = barcode;
+    $("unknownStock").value = "0";
+    setStatus("Unbekannter Code: " + barcode + "\nBitte Artikel anlegen.", "warn");
+    $("scanInput").value = "";
+    setTimeout(() => $("unknownStock").focus(), 100);
+    return;
+  }
+
+  const before = Number(product.stock || 0);
+  const after = before + delta;
+
+  if (delta < 0 && $("preventNegative").checked && after < 0) {
+    setStatus(`Blockiert: ${barcode}\nBestand würde unter 0 fallen.\nBestand bleibt: ${before}`, "bad");
+    $("scanInput").value = "";
+    await refresh();
+    focusScanSoon();
+    return;
+  }
+
+  product.stock = after;
+  await putProduct(product);
+
+  setStatus(`${barcode}\n${mode === "out" ? "Warenausgang" : "Wareneingang"}: ${delta > 0 ? "+" : ""}${delta}\nBestand: ${before} → ${after}`, "ok");
+  $("scanInput").value = "";
+  await refresh();
+  focusScanSoon();
+}
+
+function updateImagePreview(dataUrl) {
+  $("currentImage").value = dataUrl || "";
+  if (dataUrl) {
+    $("imagePreview").src = dataUrl;
+    $("imagePreview").style.display = "block";
+  } else {
+    $("imagePreview").removeAttribute("src");
+    $("imagePreview").style.display = "none";
+  }
+}
+
+function readImageFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve("");
+    if (!/^image\/jpe?g$/i.test(file.type) && !/\.jpe?g$/i.test(file.name)) {
+      reject(new Error("Bitte ein JPG-Bild auswählen."));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      const img = new Image();
+      img.onload = () => {
+        if (img.width !== 100 || img.height !== 100) {
+          const ok = confirm(`Das Bild hat ${img.width} × ${img.height} Pixel, nicht 100 × 100 Pixel.\nTrotzdem speichern?`);
+          if (!ok) return resolve("");
+        }
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error("Bild konnte nicht gelesen werden."));
+      img.src = dataUrl;
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveProductFromForm() {
+  const barcode = cleanBarcode($("barcode").value);
+  if (!barcode) {
+    alert("Bitte Artikelnummer / Barcode ausfüllen.");
+    return;
+  }
+  const old = await getProduct(barcode);
+  await putProduct({
+    ...(old || {}),
+    barcode,
+    stock: intVal("stock", 0),
+    image: $("currentImage").value || ""
+  });
+  clearProductForm();
+  setStatus("Artikel gespeichert: " + barcode, "ok");
+  await refresh();
+  focusScanSoon();
+}
+
+function clearProductForm() {
+  $("barcode").value = "";
+  $("stock").value = "0";
+  $("imageFile").value = "";
+  updateImagePreview("");
+}
+
+function editProduct(product) {
+  $("barcode").value = product.barcode || "";
+  $("stock").value = product.stock ?? 0;
+  $("imageFile").value = "";
+  updateImagePreview(product.image || "");
+  window.scrollTo({ top: $("barcode").getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
+}
+
+async function saveUnknownAndBook() {
+  const barcode = cleanBarcode($("unknownBarcode").value);
+  if (!barcode) return alert("Bitte Artikelnummer / Barcode ausfüllen.");
+  let image = "";
+  const file = $("unknownImage").files[0];
+  if (file) image = await readImageFile(file);
+  await putProduct({
+    barcode,
+    stock: intVal("unknownStock", 0),
+    image
+  });
+  $("unknownCard").classList.add("hidden");
+  $("unknownImage").value = "";
+  lastScanBarcode = "";
+  lastScanAt = 0;
+  await processBarcode(barcode);
+}
+
+async function adjustStock(barcode, delta) {
+  const product = await getProduct(barcode);
+  if (!product) return;
+  const before = Number(product.stock || 0);
+  const after = before + delta;
+  if (delta < 0 && $("preventNegative").checked && after < 0) {
+    setStatus(`Blockiert: ${barcode}\nBestand würde unter 0 fallen.`, "bad");
+    return;
+  }
+  product.stock = after;
+  await putProduct(product);
+  setStatus(`${barcode}\nBestand: ${before} → ${after}`, "ok");
+  await refresh();
+}
+
+async function refresh() {
+  const products = await getAllProducts();
+  const query = $("search").value.trim().toLowerCase();
+  const filtered = products.filter(p => !query || p.barcode.toLowerCase().includes(query));
+
+  const totalStock = products.reduce((sum, p) => sum + Number(p.stock || 0), 0);
+  const withImages = products.filter(p => !!p.image).length;
+  $("summary").textContent = `${products.length} Artikel · Gesamtbestand ${totalStock} · ${withImages} mit Bild`;
+
+  const tbody = $("productRows");
+  tbody.innerHTML = "";
+  for (const p of filtered) {
+    const tr = document.createElement("tr");
+    const thumb = p.image ? `<img class="thumb" src="${escapeAttr(p.image)}" alt="">` : `<div class="empty-thumb">kein Bild</div>`;
+    tr.innerHTML = `
+      <td>${thumb}</td>
+      <td><strong>${escapeHtml(p.barcode)}</strong></td>
+      <td><span class="stockbox">${Number(p.stock || 0)}</span></td>
+      <td>
+        <div class="actions">
+          <button class="secondary" data-edit="${escapeAttr(p.barcode)}" type="button">Bearbeiten</button>
+          <button class="good" data-plus="${escapeAttr(p.barcode)}" type="button">+1</button>
+          <button class="warn" data-minus="${escapeAttr(p.barcode)}" type="button">−1</button>
+          <button class="secondary" data-qr="${escapeAttr(p.barcode)}" type="button">QR</button>
+          <button class="bad" data-del="${escapeAttr(p.barcode)}" type="button">Löschen</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  tbody.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", async () => editProduct(await getProduct(btn.getAttribute("data-edit")))));
+  tbody.querySelectorAll("[data-plus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-plus"), 1)));
+  tbody.querySelectorAll("[data-minus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-minus"), -1)));
+  tbody.querySelectorAll("[data-qr]").forEach(btn => btn.addEventListener("click", async () => {
+    const p = await getProduct(btn.getAttribute("data-qr"));
+    if (p) renderLabels([p]);
+  }));
+  tbody.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", async () => {
+    const barcode = btn.getAttribute("data-del");
+    if (confirm(`Artikel ${barcode} wirklich löschen?`)) {
+      await deleteProduct(barcode);
+      setStatus("Artikel gelöscht: " + barcode, "warn");
+      await refresh();
+    }
+  }));
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/`/g, "&#96;"); }
+
+function csvEscape(value) {
+  const s = String(value ?? "");
+  if (/[;\n\r"]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function downloadText(filename, text, type = "text/plain;charset=utf-8") {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function exportCsv() {
+  const products = await getAllProducts();
+  const lines = ["barcode;bestand"];
+  for (const p of products) {
+    lines.push([p.barcode, p.stock].map(csvEscape).join(";"));
+  }
+  downloadText("bestand-v3.csv", lines.join("\n"), "text/csv;charset=utf-8");
+}
+
+function parseCsv(text) {
+  const delimiter = text.includes(";") ? ";" : (text.includes("\t") ? "\t" : ",");
+  const rows = [];
+  let row = [], cur = "", quoted = false;
+  for (let i=0; i<text.length; i++) {
+    const ch = text[i], next = text[i+1];
+    if (quoted) {
+      if (ch === '"' && next === '"') { cur += '"'; i++; }
+      else if (ch === '"') quoted = false;
+      else cur += ch;
+    } else {
+      if (ch === '"') quoted = true;
+      else if (ch === delimiter) { row.push(cur); cur = ""; }
+      else if (ch === "\n") { row.push(cur); rows.push(row); row = []; cur = ""; }
+      else if (ch !== "\r") cur += ch;
+    }
+  }
+  row.push(cur);
+  if (row.some(x => x.trim() !== "")) rows.push(row);
+  return rows;
+}
+
+async function importCsv(file) {
+  const text = await file.text();
+  const rows = parseCsv(text);
+  if (!rows.length) return alert("CSV ist leer.");
+
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  const hasHeader = header.includes("barcode") || header.includes("artikelnummer") || header.includes("bestand");
+  const dataRows = hasHeader ? rows.slice(1) : rows;
+
+  const barcodeI = hasHeader ? Math.max(header.indexOf("barcode"), header.indexOf("artikelnummer")) : 0;
+  let stockI = hasHeader ? header.indexOf("bestand") : 1;
+  if (stockI < 0) stockI = hasHeader ? header.indexOf("stock") : 1;
+
+  let count = 0;
+  for (const r of dataRows) {
+    const barcode = cleanBarcode(r[barcodeI >= 0 ? barcodeI : 0]);
+    if (!barcode) continue;
+    const old = await getProduct(barcode);
+    await putProduct({
+      ...(old || {}),
+      barcode,
+      stock: parseInt(r[stockI >= 0 ? stockI : 1], 10) || 0,
+      image: old?.image || ""
+    });
+    count++;
+  }
+  setStatus(`${count} Artikel importiert/aktualisiert.`, "ok");
+  await refresh();
+}
+
+async function exportFullBackup() {
+  const products = await getAllProducts();
+  const backup = {
+    app: "bestand-scanner",
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    products
+  };
+  downloadText("bestand-vollbackup-mit-bildern.json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
+}
+
+async function importFullBackup(file) {
+  const text = await file.text();
+  let data;
+  try { data = JSON.parse(text); }
+  catch { return alert("Die Datei ist kein gültiges JSON-Backup."); }
+
+  const products = Array.isArray(data) ? data : data.products;
+  if (!Array.isArray(products)) return alert("Kein gültiges Produkt-Backup gefunden.");
+
+  const replace = confirm("Soll die aktuelle Artikelliste vor dem Import gelöscht werden?\nOK = ersetzen, Abbrechen = nur hinzufügen/aktualisieren");
+  if (replace) await clearAllProducts();
+
+  let count = 0;
+  for (const p of products) {
+    const barcode = cleanBarcode(p.barcode || p.article || p.code);
+    if (!barcode) continue;
+    await putProduct({
+      barcode,
+      stock: Number(p.stock || 0),
+      image: p.image || ""
+    });
+    count++;
+  }
+  setStatus(`${count} Artikel aus Vollbackup wiederhergestellt.`, "ok");
+  await refresh();
+}
+
+async function addDemoData() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e5e7eb"/><rect x="20" y="20" width="60" height="60" rx="10" fill="#1f2937"/><text x="50" y="57" font-size="18" text-anchor="middle" fill="white" font-family="Arial">ART</text></svg>`;
+  const demoImage = "data:image/svg+xml;base64," + btoa(svg);
+  await putProduct({ barcode: "ART-000001", stock: 10, image: demoImage });
+  await putProduct({ barcode: "ART-000002", stock: 0, image: "" });
+  await putProduct({ barcode: "4012345678901", stock: 25, image: "" });
+  setStatus("Demo-Artikel angelegt. Scanne/eintippe ART-000001 und Enter.", "ok");
+  await refresh();
+}
+
+async function deleteAllData() {
+  if (!confirm("Wirklich ALLE Artikel löschen? Vorher am besten Vollbackup exportieren.")) return;
+  await clearAllProducts();
+  clearProductForm();
+  setStatus("Alle Artikel gelöscht.", "warn");
+  await refresh();
+}
+
+async function renderLabels(products) {
+  const box = $("labels");
+  box.innerHTML = "";
+  box.classList.remove("hidden");
+
+  for (const p of products) {
+    const card = document.createElement("div");
+    card.className = "label-card";
+    const canvas = document.createElement("canvas");
+    card.appendChild(canvas);
+
+    const code = document.createElement("div");
+    code.className = "label-code";
+    code.textContent = p.barcode;
+    card.appendChild(code);
+
+    const stock = document.createElement("div");
+    stock.className = "label-stock";
+    stock.textContent = "Bestand: " + Number(p.stock || 0);
+    card.appendChild(stock);
+
+    box.appendChild(card);
+    drawQrCode(canvas, p.barcode);
+  }
+
+  window.scrollTo({ top: $("labelsCard").getBoundingClientRect().top + window.scrollY - 100, behavior: "smooth" });
+}
+
+/* Minimaler QR-Code-Generator für kurze Artikelnummern.
+   Unterstützt Byte Mode, Version 1-4, Fehlerkorrektur L, ein Datenblock. */
+function drawQrCode(canvas, text) {
+  const qr = makeQr(text);
+  const scale = 8;
+  const border = 4;
+  const size = qr.size + border * 2;
+  canvas.width = size * scale;
+  canvas.height = size * scale;
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#000";
+  for (let y=0; y<qr.size; y++) {
+    for (let x=0; x<qr.size; x++) {
+      if (qr.modules[y][x]) ctx.fillRect((x + border) * scale, (y + border) * scale, scale, scale);
+    }
+  }
+}
+
+function makeQr(text) {
+  const bytes = Array.from(new TextEncoder().encode(text));
+  const configs = [
+    { v: 1, size: 21, data: 19, ecc: 7, cap: 17, align: [] },
+    { v: 2, size: 25, data: 34, ecc: 10, cap: 32, align: [18] },
+    { v: 3, size: 29, data: 55, ecc: 15, cap: 53, align: [22] },
+    { v: 4, size: 33, data: 80, ecc: 20, cap: 78, align: [26] }
+  ];
+  const cfg = configs.find(c => bytes.length <= c.cap) || configs[configs.length - 1];
+  if (bytes.length > cfg.cap) throw new Error("QR-Text ist zu lang für diese Version.");
+
+  const dataCodewords = makeDataCodewords(bytes, cfg.data);
+  const ecc = reedSolomonCompute(dataCodewords, cfg.ecc);
+  const codewords = dataCodewords.concat(ecc);
+
+  let best = null;
+  for (let mask=0; mask<8; mask++) {
+    const base = createBaseMatrix(cfg);
+    placeData(base.modules, base.reserved, codewords, mask);
+    drawFormat(base.modules, base.reserved, mask, cfg.size);
+    const penalty = getPenalty(base.modules);
+    if (!best || penalty < best.penalty) best = { modules: base.modules, penalty };
+  }
+  return { size: cfg.size, modules: best.modules };
+}
+
+function makeDataCodewords(bytes, dataLen) {
+  const bits = [];
+  const push = (val, len) => { for (let i=len-1; i>=0; i--) bits.push((val >>> i) & 1); };
+  push(0b0100, 4);              // Byte mode
+  push(bytes.length, 8);         // char count for version 1-9
+  for (const b of bytes) push(b, 8);
+  const maxBits = dataLen * 8;
+  const terminator = Math.min(4, maxBits - bits.length);
+  for (let i=0; i<terminator; i++) bits.push(0);
+  while (bits.length % 8) bits.push(0);
+  const data = [];
+  for (let i=0; i<bits.length; i += 8) {
+    let b = 0;
+    for (let j=0; j<8; j++) b = (b << 1) | bits[i+j];
+    data.push(b);
+  }
+  let pad = 0;
+  while (data.length < dataLen) {
+    data.push(pad % 2 === 0 ? 0xec : 0x11);
+    pad++;
+  }
+  return data;
+}
+
+function createBaseMatrix(cfg) {
+  const size = cfg.size;
+  const modules = Array.from({ length: size }, () => Array(size).fill(false));
+  const reserved = Array.from({ length: size }, () => Array(size).fill(false));
+  const set = (x,y,dark=true) => {
+    if (x < 0 || y < 0 || x >= size || y >= size) return;
+    modules[y][x] = !!dark;
+    reserved[y][x] = true;
+  };
+
+  drawFinder(set, 0, 0);
+  drawFinder(set, size - 7, 0);
+  drawFinder(set, 0, size - 7);
+
+  // Separators
+  for (let i=0; i<8; i++) {
+    set(7, i, false); set(i, 7, false);
+    set(size-8, i, false); set(size-8+i, 7, false);
+    set(7, size-8+i, false); set(i, size-8, false);
+  }
+
+  // Timing
+  for (let i=8; i<size-8; i++) {
+    set(i, 6, i % 2 === 0);
+    set(6, i, i % 2 === 0);
+  }
+
+  // Alignment pattern for versions 2-4
+  if (cfg.align.length) drawAlignment(set, cfg.align[0], cfg.align[0]);
+
+  // Reserve format info areas
+  for (let i=0; i<9; i++) {
+    if (i !== 6) { set(8, i, false); set(i, 8, false); }
+  }
+  for (let i=0; i<8; i++) {
+    set(size-1-i, 8, false);
+    set(8, size-1-i, false);
+  }
+
+  // Dark module
+  set(8, 4 * cfg.v + 9, true);
+
+  return { modules, reserved };
+}
+
+function drawFinder(set, x, y) {
+  for (let dy=0; dy<7; dy++) {
+    for (let dx=0; dx<7; dx++) {
+      const xx = x + dx, yy = y + dy;
+      const dark = dx === 0 || dx === 6 || dy === 0 || dy === 6 || (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4);
+      set(xx, yy, dark);
+    }
+  }
+}
+
+function drawAlignment(set, cx, cy) {
+  for (let dy=-2; dy<=2; dy++) {
+    for (let dx=-2; dx<=2; dx++) {
+      const dark = Math.max(Math.abs(dx), Math.abs(dy)) !== 1;
+      set(cx + dx, cy + dy, dark);
+    }
+  }
+}
+
+function placeData(modules, reserved, codewords, mask) {
+  const size = modules.length;
+  const bits = [];
+  for (const cw of codewords) {
+    for (let i=7; i>=0; i--) bits.push((cw >>> i) & 1);
+  }
+
+  let bitIndex = 0;
+  let upward = true;
+  for (let right = size - 1; right >= 1; right -= 2) {
+    if (right === 6) right--;
+    for (let vert = 0; vert < size; vert++) {
+      const y = upward ? size - 1 - vert : vert;
+      for (let j=0; j<2; j++) {
+        const x = right - j;
+        if (!reserved[y][x]) {
+          let dark = bitIndex < bits.length ? bits[bitIndex] === 1 : false;
+          if (maskBit(mask, x, y)) dark = !dark;
+          modules[y][x] = dark;
+          bitIndex++;
+        }
+      }
+    }
+    upward = !upward;
+  }
+}
+
+function maskBit(mask, x, y) {
+  switch (mask) {
+    case 0: return (x + y) % 2 === 0;
+    case 1: return y % 2 === 0;
+    case 2: return x % 3 === 0;
+    case 3: return (x + y) % 3 === 0;
+    case 4: return (Math.floor(y / 2) + Math.floor(x / 3)) % 2 === 0;
+    case 5: return ((x * y) % 2 + (x * y) % 3) === 0;
+    case 6: return (((x * y) % 2 + (x * y) % 3) % 2) === 0;
+    case 7: return (((x + y) % 2 + (x * y) % 3) % 2) === 0;
+  }
+  return false;
+}
+
+function drawFormat(modules, reserved, mask, size) {
+  const eccLevelL = 1; // Format bits for EC level L: 01
+  const data = (eccLevelL << 3) | mask;
+  let rem = data;
+  for (let i=0; i<10; i++) rem = (rem << 1) ^ (((rem >>> 9) & 1) * 0x537);
+  const bits = ((data << 10) | rem) ^ 0x5412;
+  const get = i => ((bits >>> i) & 1) !== 0;
+
+  const set = (x,y,dark) => {
+    modules[y][x] = dark;
+    reserved[y][x] = true;
+  };
+
+  for (let i=0; i<=5; i++) set(8, i, get(i));
+  set(8, 7, get(6));
+  set(8, 8, get(7));
+  set(7, 8, get(8));
+  for (let i=9; i<15; i++) set(14 - i, 8, get(i));
+
+  for (let i=0; i<8; i++) set(size - 1 - i, 8, get(i));
+  for (let i=8; i<15; i++) set(8, size - 15 + i, get(i));
+  set(8, size - 8, true);
+}
+
+const EXP = new Array(512);
+const LOG = new Array(256);
+(function initGf() {
+  let x = 1;
+  for (let i=0; i<255; i++) {
+    EXP[i] = x;
+    LOG[x] = i;
+    x <<= 1;
+    if (x & 0x100) x ^= 0x11d;
+  }
+  for (let i=255; i<512; i++) EXP[i] = EXP[i - 255];
+})();
+
+function gfMul(x, y) {
+  if (x === 0 || y === 0) return 0;
+  return EXP[LOG[x] + LOG[y]];
+}
+
+function reedSolomonGenerator(degree) {
+  let poly = [1];
+  for (let i=0; i<degree; i++) {
+    const next = Array(poly.length + 1).fill(0);
+    for (let j=0; j<poly.length; j++) {
+      next[j] ^= gfMul(poly[j], EXP[i]);
+      next[j + 1] ^= poly[j];
+    }
+    poly = next;
+  }
+  return poly;
+}
+
+function reedSolomonCompute(data, degree) {
+  const gen = reedSolomonGenerator(degree);
+  const result = Array(degree).fill(0);
+  for (const b of data) {
+    const factor = b ^ result.shift();
+    result.push(0);
+    for (let i=0; i<degree; i++) result[i] ^= gfMul(gen[i], factor);
+  }
+  return result;
+}
+
+function getPenalty(m) {
+  const size = m.length;
+  let penalty = 0;
+
+  // Adjacent modules in row/column
+  for (let y=0; y<size; y++) {
+    let runColor = m[y][0], runLen = 1;
+    for (let x=1; x<size; x++) {
+      if (m[y][x] === runColor) runLen++;
+      else {
+        if (runLen >= 5) penalty += 3 + (runLen - 5);
+        runColor = m[y][x]; runLen = 1;
+      }
+    }
+    if (runLen >= 5) penalty += 3 + (runLen - 5);
+  }
+  for (let x=0; x<size; x++) {
+    let runColor = m[0][x], runLen = 1;
+    for (let y=1; y<size; y++) {
+      if (m[y][x] === runColor) runLen++;
+      else {
+        if (runLen >= 5) penalty += 3 + (runLen - 5);
+        runColor = m[y][x]; runLen = 1;
+      }
+    }
+    if (runLen >= 5) penalty += 3 + (runLen - 5);
+  }
+
+  // 2x2 blocks
+  for (let y=0; y<size-1; y++) {
+    for (let x=0; x<size-1; x++) {
+      const c = m[y][x];
+      if (c === m[y][x+1] && c === m[y+1][x] && c === m[y+1][x+1]) penalty += 3;
+    }
+  }
+
+  // Finder-like patterns
+  const pattern = [true,false,true,true,true,false,true];
+  for (let y=0; y<size; y++) {
+    for (let x=0; x<=size-7; x++) {
+      if (pattern.every((v,i) => m[y][x+i] === v)) {
+        const left = x >= 4 && !m[y][x-1] && !m[y][x-2] && !m[y][x-3] && !m[y][x-4];
+        const right = x + 11 <= size && !m[y][x+7] && !m[y][x+8] && !m[y][x+9] && !m[y][x+10];
+        if (left || right) penalty += 40;
+      }
+    }
+  }
+  for (let x=0; x<size; x++) {
+    for (let y=0; y<=size-7; y++) {
+      if (pattern.every((v,i) => m[y+i][x] === v)) {
+        const up = y >= 4 && !m[y-1][x] && !m[y-2][x] && !m[y-3][x] && !m[y-4][x];
+        const down = y + 11 <= size && !m[y+7][x] && !m[y+8][x] && !m[y+9][x] && !m[y+10][x];
+        if (up || down) penalty += 40;
+      }
+    }
+  }
+
+  // Balance
+  let dark = 0;
+  for (let y=0; y<size; y++) for (let x=0; x<size; x++) if (m[y][x]) dark++;
+  const total = size * size;
+  const k = Math.ceil(Math.abs(dark * 20 - total * 10) / total) - 1;
+  penalty += k * 10;
+  return penalty;
+}
+
+function bindEvents() {
+  $("modeOut").addEventListener("click", () => setMode("out"));
+  $("modeIn").addEventListener("click", () => setMode("in"));
+  $("quickMode").addEventListener("click", () => setMode(mode === "out" ? "in" : "out"));
+  $("focusScan").addEventListener("click", focusScanSoon);
+  $("keyboardToggle").addEventListener("click", toggleKeyboardMode);
+
+  ["scanKeyboard", "doubleScanGuard", "preventNegative"].forEach(id => {
+    const el = $(id);
+    el.addEventListener("input", saveSettings);
+    el.addEventListener("change", saveSettings);
+  });
+
+  $("scanInput").addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      await processBarcode(e.target.value);
+    }
+  });
+
+  $("imageFile").addEventListener("change", async (e) => {
+    try {
+      const dataUrl = await readImageFile(e.target.files[0]);
+      if (dataUrl) updateImagePreview(dataUrl);
+    } catch (err) {
+      alert(err.message || String(err));
+      e.target.value = "";
+    }
+  });
+
+  $("saveProduct").addEventListener("click", saveProductFromForm);
+  $("clearForm").addEventListener("click", () => { clearProductForm(); focusScanSoon(); });
+  $("removeImage").addEventListener("click", () => { $("imageFile").value = ""; updateImagePreview(""); });
+  $("saveUnknown").addEventListener("click", saveUnknownAndBook);
+  $("cancelUnknown").addEventListener("click", () => { $("unknownCard").classList.add("hidden"); focusScanSoon(); });
+  $("search").addEventListener("input", refresh);
+
+  $("showAllLabels").addEventListener("click", async () => renderLabels(await getAllProducts()));
+  $("hideLabels").addEventListener("click", () => { $("labels").innerHTML = ""; $("labels").classList.add("hidden"); });
+  $("printLabels").addEventListener("click", () => window.print());
+
+  $("exportCsv").addEventListener("click", exportCsv);
+  $("importCsvBtn").addEventListener("click", () => $("importCsvFile").click());
+  $("importCsvFile").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (file) await importCsv(file);
+    e.target.value = "";
+  });
+
+  $("exportFull").addEventListener("click", exportFullBackup);
+  $("importFullBtn").addEventListener("click", () => $("importFullFile").click());
+  $("importFullFile").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (file) await importFullBackup(file);
+    e.target.value = "";
+  });
+
+  $("demoData").addEventListener("click", addDemoData);
+  $("deleteAll").addEventListener("click", deleteAllData);
+}
+
+async function init() {
+  if (!("indexedDB" in window)) {
+    setStatus("Fehler: IndexedDB wird in diesem Browser nicht unterstützt.", "bad");
+    return;
+  }
+
+  try {
+    await openDb();
+    bindEvents();
+    loadSettings();
+    await refresh();
+    setStatus("Bereit. Version 3 ist aktiv. Bilddaten werden direkt im Artikeldatensatz gespeichert.", "ok");
+    focusScanSoon();
+
+    if ("serviceWorker" in navigator) {
+      try { await navigator.serviceWorker.register("./sw.js"); }
+      catch (err) { console.warn("Service Worker konnte nicht registriert werden:", err); }
+    }
+  } catch (err) {
+    console.error(err);
+    setStatus("Startfehler: " + (err.message || err), "bad");
+  }
+}
+
+init();
+</script>
+</body>
+</html>

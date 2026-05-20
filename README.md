@@ -1,22 +1,33 @@
-{
-  "name": "Bestand Scanner",
-  "short_name": "Bestand",
-  "description": "Offline-Bestandsverwaltung v2 mit Barcode-Scanner",
-  "start_url": "./index.html",
-  "scope": "./",
-  "display": "standalone",
-  "background_color": "#f3f4f6",
-  "theme_color": "#1f2937",
-  "icons": [
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
-}
+# Bestand Scanner PWA v3
+
+Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
+
+## Datenstruktur pro Artikel
+
+- `barcode`: Artikelnummer / Barcode
+- `stock`: Bestand
+- `image`: Bild als eingebettete Bilddaten, empfohlen JPG 100 × 100 Pixel
+
+QR-Codes werden nicht gespeichert. Sie werden bei Bedarf aus `barcode` erzeugt.
+
+## Sicherung
+
+- CSV-Export: nur `barcode` und `bestand`
+- Vollbackup: `barcode`, `bestand` und `image`
+
+Für echte Datensicherung mit Bildern bitte regelmäßig das Vollbackup exportieren.
+
+## Update
+
+Dateien in GitHub Pages ersetzen:
+
+- index.html
+- manifest.json
+- sw.js
+- README.md
+- .nojekyll
+- icons/
+
+Danach im iPhone öffnen:
+
+https://deinname.github.io/dein-repository/index.html?v=3
