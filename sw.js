@@ -1,54 +1,33 @@
-# Bestand Scanner PWA v3.3
+const CACHE_NAME = "bestand-scanner-v3-3";
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./qrcode.bundle.js",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
+];
 
-Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)));
+  self.skipWaiting();
+});
 
-## Datenstruktur pro Artikel
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+    )
+  );
+  self.clients.claim();
+});
 
-- `barcode`: Artikelnummer / Barcode
-- `stock`: Bestand
-- `category`: Kategorie
-- `dimensions`: Maße
-- `image`: Bild als eingebettete Bilddaten, empfohlen JPG 100 × 100 Pixel
-
-QR-Codes werden nicht gespeichert. Sie werden bei Bedarf aus `barcode` erzeugt.
-
-## Neu in Version 3.2
-
-- Kategorie pro Artikel
-- Maße pro Artikel
-- Artikelliste sortierbar nach Artikelnummer, Bestand oder Kategorie
-- Demoartikel-Button entfernt
-
-## Sicherung
-
-- CSV-Export: `barcode`, `bestand`, `kategorie`, `masse`
-- Vollbackup: alle Felder inklusive `image`
-
-Für echte Datensicherung mit Bildern bitte regelmäßig das Vollbackup exportieren.
-
-## Update
-
-Dateien in GitHub Pages ersetzen:
-
-- index.html
-- manifest.json
-- sw.js
-- README.md
-- qrcode.bundle.js
-- .nojekyll
-- icons/
-
-Danach im iPhone öffnen:
-
-https://deinname.github.io/dein-repository/index.html?v=32
-
-
-## Neu in Version 3.3
-
-Diese Bereiche können einzeln ein- und ausgeblendet werden:
-
-- 2. Artikel anlegen / bearbeiten
-- 4. QR-Codes / Etiketten
-- 5. Sicherung / Import
-
-Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).catch(() => caches.match("./index.html"));
+    })
+  );
+});
