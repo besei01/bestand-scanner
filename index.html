@@ -1,0 +1,1250 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f2937">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Bestand">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Bestand Scanner v3.4</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --primary: #1f2937;
+      --primaryText: #ffffff;
+      --ok: #065f46;
+      --bad: #991b1b;
+      --warn: #92400e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: var(--primary);
+      color: white;
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 4px 0 0; font-size: 13px; opacity: .85; }
+    main { max-width: 900px; margin: 0 auto; padding: 14px; padding-bottom: 112px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      margin: 12px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    h2 { font-size: 17px; margin: 0 0 12px; }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .section-head h2 {
+      margin: 0;
+      flex: 1;
+    }
+    .toggle-section {
+      width: auto;
+      min-width: 112px;
+      padding: 8px 10px;
+      font-size: 13px;
+      background: #e5e7eb;
+      color: #111827;
+      border: 1px solid var(--border);
+    }
+    .collapsible-body.hidden {
+      display: none !important;
+    }
+    label { display: block; font-weight: 650; font-size: 13px; margin: 10px 0 5px; }
+    input, select, button, textarea {
+      font: inherit;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 11px 12px;
+      width: 100%;
+      background: white;
+      color: var(--text);
+    }
+    button {
+      cursor: pointer;
+      border: 0;
+      background: var(--primary);
+      color: var(--primaryText);
+      font-weight: 700;
+    }
+    button.secondary { background: #e5e7eb; color: #111827; border: 1px solid var(--border); }
+    button.good { background: #047857; }
+    button.bad { background: #b91c1c; }
+    button.warn { background: #b45309; }
+    button:disabled { opacity: .5; cursor: default; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .actions button { flex: 1; min-width: 120px; }
+    .mode {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .mode button { background: #e5e7eb; color: #111827; border: 1px solid var(--border); }
+    .mode button.active { background: var(--primary); color: white; border-color: var(--primary); }
+    #scanInput {
+      font-size: 22px;
+      padding: 14px;
+      text-align: center;
+      letter-spacing: .5px;
+      border: 2px solid var(--primary);
+    }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.35; margin: 8px 0 0; }
+    .status {
+      padding: 12px;
+      border-radius: 12px;
+      background: #eef2ff;
+      color: #312e81;
+      margin-top: 10px;
+      white-space: pre-line;
+    }
+    .status.ok { background: #ecfdf5; color: var(--ok); }
+    .status.bad { background: #fef2f2; color: var(--bad); }
+    .status.warn { background: #fffbeb; color: var(--warn); }
+    .checkrow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 0;
+      font-weight: 650;
+      font-size: 13px;
+      margin: 0;
+    }
+    .checkrow input {
+      width: auto;
+      margin: 0;
+      transform: scale(1.15);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #e5e7eb; padding: 9px 6px; vertical-align: middle; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
+    .small { font-size: 12px; color: var(--muted); }
+    .thumb {
+      width: 58px;
+      height: 58px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+      background: #f9fafb;
+      display: block;
+    }
+    .empty-thumb {
+      width: 58px;
+      height: 58px;
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      background: #f9fafb;
+    }
+    .stockbox {
+      font-size: 22px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .hidden { display: none !important; }
+    .footerbar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,.96);
+      border-top: 1px solid var(--border);
+      padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      backdrop-filter: blur(10px);
+      z-index: 9;
+    }
+    .footerbar > div { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    #imagePreview {
+      width: 100px;
+      height: 100px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+      background: #f9fafb;
+      display: none;
+      margin-top: 8px;
+    }
+    .qr-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .label-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      background: white;
+      text-align: center;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .label-card canvas {
+      width: 112px;
+      height: 112px;
+      image-rendering: pixelated;
+    }
+    .label-code {
+      margin-top: 6px;
+      font-weight: 800;
+      font-size: 13px;
+      word-break: break-all;
+    }
+    .label-stock {
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    @media (max-width: 560px) {
+      .row, .row3 { grid-template-columns: 1fr; }
+      main { padding: 10px; padding-bottom: 120px; }
+      .card { border-radius: 14px; padding: 12px; }
+      .footerbar > div { grid-template-columns: 1fr; }
+      th:nth-child(4), td:nth-child(4) { display: none; }
+    }
+    @media print {
+      header, main > section:not(#labelsCard), .footerbar { display: none !important; }
+      body { background: white; }
+      main { max-width: none; padding: 0; }
+      #labelsCard {
+        display: block !important;
+        border: none;
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+      }
+      #labelsCard .section-head, #labelsCard .no-print { display: none !important; }
+      .qr-wrap {
+        display: grid;
+        grid-template-columns: repeat(3, 45mm);
+        gap: 6mm;
+        margin: 0;
+      }
+      .label-card {
+        width: 45mm;
+        min-height: 55mm;
+        border: 1px solid #999;
+        border-radius: 0;
+        padding: 4mm;
+      }
+      .label-card canvas {
+        width: 32mm;
+        height: 32mm;
+      }
+      .label-code { font-size: 10pt; }
+      .label-stock { font-size: 8pt; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bestand Scanner</h1>
+    <p>Offline-Lagerverwaltung v3.4: Barcode · Bestand · Bild · Kategorie · Maße · MagnetNummer</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Scannen</h2>
+
+      <div class="mode">
+        <button id="modeOut" class="active" type="button">Warenausgang −</button>
+        <button id="modeIn" type="button">Wareneingang +</button>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="qty">Menge pro Scan</label>
+          <input id="qty" type="number" min="1" step="1" value="1">
+        </div>
+        <div>
+          <label for="scanKeyboard">Scan-Feld</label>
+          <select id="scanKeyboard">
+            <option value="scanner">Scanner-Modus: Tastatur aus</option>
+            <option value="manual">Manuell: Tastatur erlauben</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <label class="checkrow"><input id="doubleScanGuard" type="checkbox" checked> Gleichen Barcode kurz ignorieren</label>
+        <label class="checkrow"><input id="preventNegative" type="checkbox" checked> Bestand nicht unter 0 buchen</label>
+      </div>
+
+      <label for="scanInput">Barcode / Artikelnummer</label>
+      <input id="scanInput" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Hier scannen …">
+      <p class="hint">Der Scanner sollte nach dem Code „Enter“ senden. QR-Codes werden aus der Artikelnummer erzeugt, aber nicht gespeichert.</p>
+      <div id="scanStatus" class="status">Bereit. Daten werden lokal auf diesem Gerät gespeichert.</div>
+    </section>
+
+    <section id="unknownCard" class="card hidden">
+      <h2>Unbekannten Artikel anlegen</h2>
+      <p class="hint">Dieser Code ist noch nicht bekannt. Lege den Artikel an, danach wird der Scan gebucht.</p>
+      <label for="unknownBarcode">Artikelnummer / Barcode</label>
+      <input id="unknownBarcode" autocomplete="off">
+      <label for="unknownStock">Startbestand</label>
+      <input id="unknownStock" type="number" step="1" value="0">
+      <div class="row3">
+        <div>
+          <label for="unknownCategory">Kategorie</label>
+          <input id="unknownCategory" autocomplete="off" placeholder="optional">
+        </div>
+        <div>
+          <label for="unknownDimensions">Maße</label>
+          <input id="unknownDimensions" autocomplete="off" placeholder="optional">
+        </div>
+        <div>
+          <label for="unknownMagnetNumber">MagnetNummer</label>
+          <input id="unknownMagnetNumber" autocomplete="off" inputmode="numeric" placeholder="optional">
+        </div>
+      </div>
+      <label for="unknownImage">Bild optional, JPG 100 × 100 Pixel</label>
+      <input id="unknownImage" type="file" accept="image/jpeg,image/jpg">
+      <div class="actions" style="margin-top:12px">
+        <button id="saveUnknown" class="good" type="button">Speichern & buchen</button>
+        <button id="cancelUnknown" class="secondary" type="button">Abbrechen</button>
+      </div>
+    </section>
+
+    <section class="card" id="editCard">
+      <div class="section-head">
+        <h2>2. Artikel anlegen / bearbeiten</h2>
+        <button id="toggleEditSection" class="toggle-section" type="button">Ausblenden</button>
+      </div>
+      <div id="editSectionBody" class="collapsible-body">
+      <div class="row">
+        <div>
+          <label for="barcode">Artikelnummer / Barcode</label>
+          <input id="barcode" autocomplete="off" placeholder="z. B. ART-000123">
+        </div>
+        <div>
+          <label for="stock">Bestand</label>
+          <input id="stock" type="number" step="1" value="0">
+        </div>
+      </div>
+      <div class="row3">
+        <div>
+          <label for="category">Kategorie</label>
+          <input id="category" autocomplete="off" placeholder="z. B. Magnete">
+        </div>
+        <div>
+          <label for="dimensions">Maße</label>
+          <input id="dimensions" autocomplete="off" placeholder="z. B. 3x3">
+        </div>
+        <div>
+          <label for="magnetNumber">MagnetNummer</label>
+          <input id="magnetNumber" autocomplete="off" inputmode="numeric" placeholder="z. B. 1">
+        </div>
+      </div>
+
+      <label for="imageFile">Bild, JPG 100 × 100 Pixel</label>
+      <input id="imageFile" type="file" accept="image/jpeg,image/jpg">
+      <img id="imagePreview" alt="Bildvorschau">
+      <input id="currentImage" type="hidden">
+
+      <div class="actions" style="margin-top:12px">
+        <button id="saveProduct" class="good" type="button">Artikel speichern</button>
+        <button id="clearForm" class="secondary" type="button">Felder leeren</button>
+        <button id="removeImage" class="secondary" type="button">Bild entfernen</button>
+      </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>3. Artikelliste</h2>
+      <div class="row">
+        <div>
+          <label for="search">Suche</label>
+          <input id="search" autocomplete="off" placeholder="Artikelnummer, Kategorie, Maße oder MagnetNummer …">
+        </div>
+        <div>
+          <label for="sortBy">Sortieren nach</label>
+          <select id="sortBy">
+            <option value="barcode-asc">Artikelnummer aufsteigend</option>
+            <option value="barcode-desc">Artikelnummer absteigend</option>
+            <option value="stock-asc">Bestand aufsteigend</option>
+            <option value="stock-desc">Bestand absteigend</option>
+            <option value="category-asc">Kategorie aufsteigend</option>
+            <option value="category-desc">Kategorie absteigend</option>
+            <option value="magnet-asc">MagnetNummer aufsteigend</option>
+            <option value="magnet-desc">MagnetNummer absteigend</option>
+          </select>
+        </div>
+      </div>
+      <p id="summary" class="hint"></p>
+      <div style="overflow:auto; margin-top:8px">
+        <table>
+          <thead>
+            <tr>
+              <th>Bild</th>
+              <th>Artikelnummer / Barcode</th>
+              <th>Kategorie</th>
+              <th>Maße</th>
+              <th>MagnetNummer</th>
+              <th>Bestand</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody id="productRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="labelsCard" class="card">
+      <div class="section-head no-print">
+        <h2>4. QR-Codes / Etiketten</h2>
+        <button id="toggleLabelsSection" class="toggle-section" type="button">Ausblenden</button>
+      </div>
+      <div id="labelsSectionBody" class="collapsible-body">
+      <div class="no-print">
+        <p class="hint">QR-Codes werden live aus der Artikelnummer erzeugt und nicht in der Datenbank gespeichert.</p>
+        <div class="actions">
+          <button id="showAllLabels" type="button">Alle QR-Codes anzeigen</button>
+          <button id="printLabels" class="secondary" type="button">Drucken</button>
+          <button id="hideLabels" class="secondary" type="button">QR-Codes ausblenden</button>
+        </div>
+      </div>
+      <div id="labels" class="qr-wrap hidden"></div>
+      </div>
+    </section>
+
+    <section class="card" id="backupCard">
+      <div class="section-head">
+        <h2>5. Sicherung / Import</h2>
+        <button id="toggleBackupSection" class="toggle-section" type="button">Ausblenden</button>
+      </div>
+      <div id="backupSectionBody" class="collapsible-body">
+      <p class="hint">CSV enthält Artikelnummer, Bestand, Kategorie, Maße und MagnetNummer. Das Vollbackup enthält zusätzlich die Bilder.</p>
+      <div class="actions">
+        <button id="exportCsv" type="button">CSV exportieren</button>
+        <button id="importCsvBtn" class="secondary" type="button">CSV importieren</button>
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button id="exportFull" class="good" type="button">Vollbackup mit Bildern exportieren</button>
+        <button id="importFullBtn" class="secondary" type="button">Vollbackup wiederherstellen</button>
+      </div>
+      <input id="importCsvFile" class="hidden" type="file" accept=".csv,text/csv,text/plain">
+      <input id="importFullFile" class="hidden" type="file" accept=".json,application/json">
+      <div class="actions" style="margin-top:10px">
+        <button id="deleteAll" class="bad" type="button">Alle Artikel löschen</button>
+      </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="footerbar">
+    <div>
+      <button id="focusScan" type="button">Scan-Feld aktivieren</button>
+      <button id="quickMode" class="secondary" type="button">Ausgang −</button>
+      <button id="keyboardToggle" class="secondary" type="button">Tastatur an</button>
+    </div>
+  </div>
+
+<script src="qrcode.bundle.js"></script>
+<script>
+const DB_NAME = "bestand-scanner-db";
+const DB_VERSION = 1;
+let db;
+let mode = "out";
+let lastScanBarcode = "";
+let lastScanAt = 0;
+
+const $ = (id) => document.getElementById(id);
+
+const COLLAPSIBLE_SECTIONS = [
+  { key: "edit", body: "editSectionBody", button: "toggleEditSection" },
+  { key: "labels", body: "labelsSectionBody", button: "toggleLabelsSection" },
+  { key: "backup", body: "backupSectionBody", button: "toggleBackupSection" }
+];
+
+function getSectionState() {
+  try {
+    return JSON.parse(localStorage.getItem("bestand-scanner-sections-v33") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveSectionState(state) {
+  localStorage.setItem("bestand-scanner-sections-v33", JSON.stringify(state));
+}
+
+function applySectionState(key, collapsed) {
+  const cfg = COLLAPSIBLE_SECTIONS.find(s => s.key === key);
+  if (!cfg) return;
+  const body = $(cfg.body);
+  const btn = $(cfg.button);
+  if (!body || !btn) return;
+  body.classList.toggle("hidden", !!collapsed);
+  btn.textContent = collapsed ? "Einblenden" : "Ausblenden";
+  btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+}
+
+function loadSectionState() {
+  const state = getSectionState();
+  for (const cfg of COLLAPSIBLE_SECTIONS) {
+    applySectionState(cfg.key, !!state[cfg.key]);
+  }
+}
+
+function toggleSection(key) {
+  const state = getSectionState();
+  state[key] = !state[key];
+  saveSectionState(state);
+  applySectionState(key, !!state[key]);
+  focusScanSoon();
+}
+
+function openSection(key) {
+  const state = getSectionState();
+  state[key] = false;
+  saveSectionState(state);
+  applySectionState(key, false);
+}
+
+function openLabelsSection() {
+  openSection("labels");
+}
+
+function openEditSection() {
+  openSection("edit");
+}
+
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const database = req.result;
+      if (!database.objectStoreNames.contains("products")) {
+        const store = database.createObjectStore("products", { keyPath: "barcode" });
+        store.createIndex("barcode", "barcode", { unique: true });
+      }
+      if (!database.objectStoreNames.contains("history")) {
+        database.createObjectStore("history", { keyPath: "id", autoIncrement: true });
+      }
+    };
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function tx(store, mode = "readonly") {
+  return db.transaction(store, mode).objectStore(store);
+}
+
+function getProduct(barcode) {
+  return new Promise((resolve, reject) => {
+    const req = tx("products").get(barcode);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function putProduct(product) {
+  return new Promise((resolve, reject) => {
+    const now = new Date().toISOString();
+    const clean = {
+      barcode: String(product.barcode || "").trim(),
+      stock: Number(product.stock || 0),
+      category: String(product.category || product.kategorie || "").trim(),
+      dimensions: String(product.dimensions || product.maße || product.masse || product.size || "").trim(),
+      magnetNumber: String(product.magnetNumber || product.magnetnummer || product.magnetNummer || product.magnet_no || product.magnetNo || "").trim(),
+      image: product.image || "",
+      updatedAt: now,
+      createdAt: product.createdAt || now
+    };
+    const req = tx("products", "readwrite").put(clean);
+    req.onsuccess = () => resolve(clean);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function deleteProduct(barcode) {
+  return new Promise((resolve, reject) => {
+    const req = tx("products", "readwrite").delete(barcode);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getAllProducts() {
+  return new Promise((resolve, reject) => {
+    const req = tx("products").getAll();
+    req.onsuccess = () => {
+      const rows = (req.result || []).map(p => ({
+        barcode: String(p.barcode || "").trim(),
+        stock: Number(p.stock || 0),
+        category: String(p.category || p.kategorie || "").trim(),
+        dimensions: String(p.dimensions || p.maße || p.masse || p.size || "").trim(),
+        magnetNumber: String(p.magnetNumber || p.magnetnummer || p.magnetNummer || p.magnet_no || p.magnetNo || "").trim(),
+        image: p.image || "",
+        createdAt: p.createdAt || "",
+        updatedAt: p.updatedAt || ""
+      })).filter(p => p.barcode);
+      resolve(rows);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function clearAllProducts() {
+  return new Promise((resolve, reject) => {
+    const req = tx("products", "readwrite").clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function setStatus(message, type = "") {
+  const el = $("scanStatus");
+  el.className = "status" + (type ? " " + type : "");
+  el.textContent = message;
+}
+
+function setMode(nextMode) {
+  mode = nextMode;
+  $("modeOut").classList.toggle("active", mode === "out");
+  $("modeIn").classList.toggle("active", mode === "in");
+  $("quickMode").textContent = mode === "out" ? "Ausgang −" : "Eingang +";
+  $("quickMode").className = mode === "out" ? "secondary" : "good";
+  focusScanSoon();
+}
+
+function focusScanSoon() {
+  setTimeout(() => {
+    $("scanInput").focus();
+    $("scanInput").select();
+  }, 80);
+}
+
+function cleanBarcode(value) {
+  return String(value || "").trim();
+}
+
+function intVal(id, fallback = 0) {
+  const n = parseInt($(id).value, 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("bestand-scanner-settings-v3") || "{}");
+    if (saved.scanKeyboard) $("scanKeyboard").value = saved.scanKeyboard;
+    if (saved.doubleScanGuard !== undefined) $("doubleScanGuard").checked = !!saved.doubleScanGuard;
+    if (saved.preventNegative !== undefined) $("preventNegative").checked = !!saved.preventNegative;
+  } catch (err) {
+    console.warn("Einstellungen konnten nicht geladen werden:", err);
+  }
+  applyScanKeyboardMode();
+}
+
+function saveSettings() {
+  const settings = {
+    scanKeyboard: $("scanKeyboard").value,
+    doubleScanGuard: $("doubleScanGuard").checked,
+    preventNegative: $("preventNegative").checked
+  };
+  localStorage.setItem("bestand-scanner-settings-v3", JSON.stringify(settings));
+  applyScanKeyboardMode();
+}
+
+function applyScanKeyboardMode() {
+  const scanInput = $("scanInput");
+  const isScannerMode = $("scanKeyboard").value === "scanner";
+  if (isScannerMode) {
+    scanInput.setAttribute("inputmode", "none");
+    $("keyboardToggle").textContent = "Tastatur an";
+  } else {
+    scanInput.removeAttribute("inputmode");
+    $("keyboardToggle").textContent = "Scanner-Modus";
+  }
+}
+
+function toggleKeyboardMode() {
+  $("scanKeyboard").value = $("scanKeyboard").value === "scanner" ? "manual" : "scanner";
+  saveSettings();
+  focusScanSoon();
+}
+
+function isDuplicateScan(barcode) {
+  if (!$("doubleScanGuard").checked) return false;
+  const now = Date.now();
+  return barcode === lastScanBarcode && (now - lastScanAt) < 2000;
+}
+
+function rememberScan(barcode) {
+  lastScanBarcode = barcode;
+  lastScanAt = Date.now();
+}
+
+async function processBarcode(raw) {
+  const barcode = cleanBarcode(raw);
+  if (!barcode) return;
+
+  if (isDuplicateScan(barcode)) {
+    setStatus(`Doppelscan ignoriert: ${barcode}`, "warn");
+    $("scanInput").value = "";
+    focusScanSoon();
+    return;
+  }
+  rememberScan(barcode);
+
+  const qty = Math.max(1, intVal("qty", 1));
+  const delta = mode === "out" ? -qty : qty;
+  const product = await getProduct(barcode);
+
+  if (!product) {
+    $("unknownCard").classList.remove("hidden");
+    $("unknownBarcode").value = barcode;
+    $("unknownStock").value = "0";
+    $("unknownCategory").value = "";
+    $("unknownDimensions").value = "";
+    setStatus("Unbekannter Code: " + barcode + "\nBitte Artikel anlegen.", "warn");
+    $("scanInput").value = "";
+    setTimeout(() => $("unknownStock").focus(), 100);
+    return;
+  }
+
+  const before = Number(product.stock || 0);
+  const after = before + delta;
+
+  if (delta < 0 && $("preventNegative").checked && after < 0) {
+    setStatus(`Blockiert: ${barcode}\nBestand würde unter 0 fallen.\nBestand bleibt: ${before}`, "bad");
+    $("scanInput").value = "";
+    await refresh();
+    focusScanSoon();
+    return;
+  }
+
+  product.stock = after;
+  await putProduct(product);
+
+  setStatus(`${barcode}\n${mode === "out" ? "Warenausgang" : "Wareneingang"}: ${delta > 0 ? "+" : ""}${delta}\nBestand: ${before} → ${after}`, "ok");
+  $("scanInput").value = "";
+  await refresh();
+  focusScanSoon();
+}
+
+function updateImagePreview(dataUrl) {
+  $("currentImage").value = dataUrl || "";
+  if (dataUrl) {
+    $("imagePreview").src = dataUrl;
+    $("imagePreview").style.display = "block";
+  } else {
+    $("imagePreview").removeAttribute("src");
+    $("imagePreview").style.display = "none";
+  }
+}
+
+function readImageFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve("");
+    if (!/^image\/jpe?g$/i.test(file.type) && !/\.jpe?g$/i.test(file.name)) {
+      reject(new Error("Bitte ein JPG-Bild auswählen."));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      const img = new Image();
+      img.onload = () => {
+        if (img.width !== 100 || img.height !== 100) {
+          const ok = confirm(`Das Bild hat ${img.width} × ${img.height} Pixel, nicht 100 × 100 Pixel.\nTrotzdem speichern?`);
+          if (!ok) return resolve("");
+        }
+        resolve(dataUrl);
+      };
+      img.onerror = () => reject(new Error("Bild konnte nicht gelesen werden."));
+      img.src = dataUrl;
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveProductFromForm() {
+  const barcode = cleanBarcode($("barcode").value);
+  if (!barcode) {
+    alert("Bitte Artikelnummer / Barcode ausfüllen.");
+    return;
+  }
+  const old = await getProduct(barcode);
+  await putProduct({
+    ...(old || {}),
+    barcode,
+    stock: intVal("stock", 0),
+    category: $("category").value.trim(),
+    dimensions: $("dimensions").value.trim(),
+    magnetNumber: $("magnetNumber").value.trim(),
+    image: $("currentImage").value || ""
+  });
+  clearProductForm();
+  setStatus("Artikel gespeichert: " + barcode, "ok");
+  await refresh();
+  focusScanSoon();
+}
+
+function clearProductForm() {
+  $("barcode").value = "";
+  $("stock").value = "0";
+  $("category").value = "";
+  $("dimensions").value = "";
+  $("magnetNumber").value = "";
+  $("imageFile").value = "";
+  updateImagePreview("");
+}
+
+function editProduct(product) {
+  openEditSection();
+  $("barcode").value = product.barcode || "";
+  $("stock").value = product.stock ?? 0;
+  $("category").value = product.category || "";
+  $("dimensions").value = product.dimensions || "";
+  $("magnetNumber").value = product.magnetNumber || "";
+  $("imageFile").value = "";
+  updateImagePreview(product.image || "");
+  window.scrollTo({ top: $("barcode").getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
+}
+
+async function saveUnknownAndBook() {
+  const barcode = cleanBarcode($("unknownBarcode").value);
+  if (!barcode) return alert("Bitte Artikelnummer / Barcode ausfüllen.");
+  let image = "";
+  const file = $("unknownImage").files[0];
+  if (file) image = await readImageFile(file);
+  await putProduct({
+    barcode,
+    stock: intVal("unknownStock", 0),
+    category: $("unknownCategory").value.trim(),
+    dimensions: $("unknownDimensions").value.trim(),
+    magnetNumber: $("unknownMagnetNumber").value.trim(),
+    image
+  });
+  $("unknownCard").classList.add("hidden");
+  $("unknownImage").value = "";
+  lastScanBarcode = "";
+  lastScanAt = 0;
+  await processBarcode(barcode);
+}
+
+async function adjustStock(barcode, delta) {
+  const product = await getProduct(barcode);
+  if (!product) return;
+  const before = Number(product.stock || 0);
+  const after = before + delta;
+  if (delta < 0 && $("preventNegative").checked && after < 0) {
+    setStatus(`Blockiert: ${barcode}\nBestand würde unter 0 fallen.`, "bad");
+    return;
+  }
+  product.stock = after;
+  await putProduct(product);
+  setStatus(`${barcode}\nBestand: ${before} → ${after}`, "ok");
+  await refresh();
+}
+
+async function refresh() {
+  const products = await getAllProducts();
+  const query = $("search").value.trim().toLowerCase();
+  const filtered = products.filter(p => {
+    const haystack = `${p.barcode} ${p.category || ""} ${p.dimensions || ""} ${p.magnetNumber || ""}`.toLowerCase();
+    return !query || haystack.includes(query);
+  });
+
+  const sortBy = $("sortBy") ? $("sortBy").value : "barcode-asc";
+  filtered.sort((a, b) => {
+    if (sortBy === "stock-asc") return Number(a.stock || 0) - Number(b.stock || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "stock-desc") return Number(b.stock || 0) - Number(a.stock || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "category-asc") return (a.category || "").localeCompare(b.category || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "category-desc") return (b.category || "").localeCompare(a.category || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "magnet-asc") return (a.magnetNumber || "").localeCompare(b.magnetNumber || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "magnet-desc") return (b.magnetNumber || "").localeCompare(a.magnetNumber || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "barcode-desc") return b.barcode.localeCompare(a.barcode, "de", { numeric: true });
+    return a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+  });
+
+  const totalStock = products.reduce((sum, p) => sum + Number(p.stock || 0), 0);
+  const withImages = products.filter(p => !!p.image).length;
+  const categories = new Set(products.map(p => p.category).filter(Boolean)).size;
+  const withMagnetNumbers = products.filter(p => !!p.magnetNumber).length;
+  $("summary").textContent = `${products.length} Artikel · Gesamtbestand ${totalStock} · ${categories} Kategorien · ${withImages} mit Bild · ${withMagnetNumbers} mit MagnetNummer`;
+
+  const tbody = $("productRows");
+  tbody.innerHTML = "";
+  for (const p of filtered) {
+    const tr = document.createElement("tr");
+    const thumb = p.image ? `<img class="thumb" src="${escapeAttr(p.image)}" alt="">` : `<div class="empty-thumb">kein Bild</div>`;
+    tr.innerHTML = `
+      <td>${thumb}</td>
+      <td><strong>${escapeHtml(p.barcode)}</strong></td>
+      <td>${escapeHtml(p.category || "")}</td>
+      <td>${escapeHtml(p.dimensions || "")}</td>
+      <td>${escapeHtml(p.magnetNumber || "")}</td>
+      <td><span class="stockbox">${Number(p.stock || 0)}</span></td>
+      <td>
+        <div class="actions">
+          <button class="secondary" data-edit="${escapeAttr(p.barcode)}" type="button">Bearbeiten</button>
+          <button class="good" data-plus="${escapeAttr(p.barcode)}" type="button">+1</button>
+          <button class="warn" data-minus="${escapeAttr(p.barcode)}" type="button">−1</button>
+          <button class="secondary" data-qr="${escapeAttr(p.barcode)}" type="button">QR</button>
+          <button class="bad" data-del="${escapeAttr(p.barcode)}" type="button">Löschen</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  tbody.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", async () => editProduct(await getProduct(btn.getAttribute("data-edit")))));
+  tbody.querySelectorAll("[data-plus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-plus"), 1)));
+  tbody.querySelectorAll("[data-minus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-minus"), -1)));
+  tbody.querySelectorAll("[data-qr]").forEach(btn => btn.addEventListener("click", async () => {
+    const p = await getProduct(btn.getAttribute("data-qr"));
+    if (p) renderLabels([p]);
+  }));
+  tbody.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", async () => {
+    const barcode = btn.getAttribute("data-del");
+    if (confirm(`Artikel ${barcode} wirklich löschen?`)) {
+      await deleteProduct(barcode);
+      setStatus("Artikel gelöscht: " + barcode, "warn");
+      await refresh();
+    }
+  }));
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/`/g, "&#96;"); }
+
+function csvEscape(value) {
+  const s = String(value ?? "");
+  if (/[;\n\r"]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function downloadText(filename, text, type = "text/plain;charset=utf-8") {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function exportCsv() {
+  const products = await getAllProducts();
+  const lines = ["barcode;bestand;kategorie;masse;magnetnummer"];
+  for (const p of products) {
+    lines.push([p.barcode, p.stock, p.category || "", p.dimensions || "", p.magnetNumber || ""].map(csvEscape).join(";"));
+  }
+  downloadText("bestand-v3.csv", lines.join("\n"), "text/csv;charset=utf-8");
+}
+
+function parseCsv(text) {
+  const delimiter = text.includes(";") ? ";" : (text.includes("\t") ? "\t" : ",");
+  const rows = [];
+  let row = [], cur = "", quoted = false;
+  for (let i=0; i<text.length; i++) {
+    const ch = text[i], next = text[i+1];
+    if (quoted) {
+      if (ch === '"' && next === '"') { cur += '"'; i++; }
+      else if (ch === '"') quoted = false;
+      else cur += ch;
+    } else {
+      if (ch === '"') quoted = true;
+      else if (ch === delimiter) { row.push(cur); cur = ""; }
+      else if (ch === "\n") { row.push(cur); rows.push(row); row = []; cur = ""; }
+      else if (ch !== "\r") cur += ch;
+    }
+  }
+  row.push(cur);
+  if (row.some(x => x.trim() !== "")) rows.push(row);
+  return rows;
+}
+
+async function importCsv(file) {
+  const text = await file.text();
+  const rows = parseCsv(text);
+  if (!rows.length) return alert("CSV ist leer.");
+
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  const hasHeader = header.includes("barcode") || header.includes("artikelnummer") || header.includes("bestand");
+  const dataRows = hasHeader ? rows.slice(1) : rows;
+
+  const barcodeI = hasHeader ? Math.max(header.indexOf("barcode"), header.indexOf("artikelnummer")) : 0;
+  let stockI = hasHeader ? header.indexOf("bestand") : 1;
+  if (stockI < 0) stockI = hasHeader ? header.indexOf("stock") : 1;
+  let categoryI = hasHeader ? header.indexOf("kategorie") : 2;
+  if (categoryI < 0) categoryI = hasHeader ? header.indexOf("category") : 2;
+  let dimensionsI = hasHeader ? header.indexOf("maße") : 3;
+  if (dimensionsI < 0) dimensionsI = hasHeader ? header.indexOf("masse") : 3;
+  if (dimensionsI < 0) dimensionsI = hasHeader ? header.indexOf("dimensions") : 3;
+  let magnetNumberI = hasHeader ? header.indexOf("magnetnummer") : 4;
+  if (magnetNumberI < 0) magnetNumberI = hasHeader ? header.indexOf("magnetnumber") : 4;
+  if (magnetNumberI < 0) magnetNumberI = hasHeader ? header.indexOf("magnet_nummer") : 4;
+
+  let count = 0;
+  for (const r of dataRows) {
+    const barcode = cleanBarcode(r[barcodeI >= 0 ? barcodeI : 0]);
+    if (!barcode) continue;
+    const old = await getProduct(barcode);
+    await putProduct({
+      ...(old || {}),
+      barcode,
+      stock: parseInt(r[stockI >= 0 ? stockI : 1], 10) || 0,
+      category: (r[categoryI >= 0 ? categoryI : 2] || old?.category || "").trim(),
+      dimensions: (r[dimensionsI >= 0 ? dimensionsI : 3] || old?.dimensions || "").trim(),
+      magnetNumber: (r[magnetNumberI >= 0 ? magnetNumberI : 4] || old?.magnetNumber || "").trim(),
+      image: old?.image || ""
+    });
+    count++;
+  }
+  setStatus(`${count} Artikel importiert/aktualisiert.`, "ok");
+  await refresh();
+}
+
+async function exportFullBackup() {
+  const products = await getAllProducts();
+  const backup = {
+    app: "bestand-scanner",
+    version: 3.4,
+    exportedAt: new Date().toISOString(),
+    products
+  };
+  downloadText("bestand-vollbackup-mit-bildern.json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
+}
+
+async function importFullBackup(file) {
+  const text = await file.text();
+  let data;
+  try { data = JSON.parse(text); }
+  catch { return alert("Die Datei ist kein gültiges JSON-Backup."); }
+
+  const products = Array.isArray(data) ? data : data.products;
+  if (!Array.isArray(products)) return alert("Kein gültiges Produkt-Backup gefunden.");
+
+  const replace = confirm("Soll die aktuelle Artikelliste vor dem Import gelöscht werden?\nOK = ersetzen, Abbrechen = nur hinzufügen/aktualisieren");
+  if (replace) await clearAllProducts();
+
+  let count = 0;
+  for (const p of products) {
+    const barcode = cleanBarcode(p.barcode || p.article || p.code);
+    if (!barcode) continue;
+    await putProduct({
+      barcode,
+      stock: Number(p.stock || 0),
+      category: p.category || p.kategorie || "",
+      dimensions: p.dimensions || p.maße || p.masse || p.size || "",
+      magnetNumber: p.magnetNumber || p.magnetnummer || p.magnetNummer || p.magnet_no || p.magnetNo || "",
+      image: p.image || ""
+    });
+    count++;
+  }
+  setStatus(`${count} Artikel aus Vollbackup wiederhergestellt.`, "ok");
+  await refresh();
+}
+
+async function deleteAllData() {
+  if (!confirm("Wirklich ALLE Artikel löschen? Vorher am besten Vollbackup exportieren.")) return;
+  await clearAllProducts();
+  clearProductForm();
+  setStatus("Alle Artikel gelöscht.", "warn");
+  await refresh();
+}
+
+async function renderLabels(products) {
+  openLabelsSection();
+  const box = $("labels");
+  box.innerHTML = "";
+  box.classList.remove("hidden");
+
+  for (const p of products) {
+    const card = document.createElement("div");
+    card.className = "label-card";
+    const canvas = document.createElement("canvas");
+    card.appendChild(canvas);
+
+    const code = document.createElement("div");
+    code.className = "label-code";
+    code.textContent = p.barcode;
+    card.appendChild(code);
+
+    if (p.category || p.dimensions || p.magnetNumber) {
+      const meta = document.createElement("div");
+      meta.className = "label-stock";
+      const magnetText = p.magnetNumber ? "MagnetNr. " + p.magnetNumber : "";
+      meta.textContent = [p.category, p.dimensions, magnetText].filter(Boolean).join(" · ");
+      card.appendChild(meta);
+    }
+
+    const stock = document.createElement("div");
+    stock.className = "label-stock";
+    stock.textContent = "Bestand: " + Number(p.stock || 0);
+    card.appendChild(stock);
+
+    box.appendChild(card);
+    drawQrCode(canvas, p.barcode);
+  }
+
+  window.scrollTo({ top: $("labelsCard").getBoundingClientRect().top + window.scrollY - 100, behavior: "smooth" });
+}
+
+function drawQrCode(canvas, text) {
+  if (!window.QRCode || typeof window.QRCode.toCanvas !== "function") {
+    const ctx = canvas.getContext("2d");
+    canvas.width = 220;
+    canvas.height = 220;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#000";
+    ctx.font = "14px Arial";
+    ctx.fillText("QR-Bibliothek fehlt", 18, 110);
+    console.error("QRCode-Bibliothek nicht geladen.");
+    return;
+  }
+
+  window.QRCode.toCanvas(canvas, String(text), {
+    errorCorrectionLevel: "M",
+    margin: 2,
+    width: 220,
+    color: {
+      dark: "#000000",
+      light: "#ffffff"
+    }
+  }, (err) => {
+    if (err) {
+      console.error("QR-Code konnte nicht erzeugt werden:", err);
+      const ctx = canvas.getContext("2d");
+      canvas.width = 220;
+      canvas.height = 220;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#000";
+      ctx.font = "14px Arial";
+      ctx.fillText("QR-Fehler", 75, 110);
+    }
+  });
+}
+
+function bindEvents() {
+  $("modeOut").addEventListener("click", () => setMode("out"));
+  $("modeIn").addEventListener("click", () => setMode("in"));
+  $("quickMode").addEventListener("click", () => setMode(mode === "out" ? "in" : "out"));
+  $("focusScan").addEventListener("click", focusScanSoon);
+  $("keyboardToggle").addEventListener("click", toggleKeyboardMode);
+  $("toggleEditSection").addEventListener("click", () => toggleSection("edit"));
+  $("toggleLabelsSection").addEventListener("click", () => toggleSection("labels"));
+  $("toggleBackupSection").addEventListener("click", () => toggleSection("backup"));
+
+  ["scanKeyboard", "doubleScanGuard", "preventNegative"].forEach(id => {
+    const el = $(id);
+    el.addEventListener("input", saveSettings);
+    el.addEventListener("change", saveSettings);
+  });
+
+  $("scanInput").addEventListener("keydown", async (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      await processBarcode(e.target.value);
+    }
+  });
+
+  $("imageFile").addEventListener("change", async (e) => {
+    try {
+      const dataUrl = await readImageFile(e.target.files[0]);
+      if (dataUrl) updateImagePreview(dataUrl);
+    } catch (err) {
+      alert(err.message || String(err));
+      e.target.value = "";
+    }
+  });
+
+  $("saveProduct").addEventListener("click", saveProductFromForm);
+  $("clearForm").addEventListener("click", () => { clearProductForm(); focusScanSoon(); });
+  $("removeImage").addEventListener("click", () => { $("imageFile").value = ""; updateImagePreview(""); });
+  $("saveUnknown").addEventListener("click", saveUnknownAndBook);
+  $("cancelUnknown").addEventListener("click", () => { $("unknownCard").classList.add("hidden"); focusScanSoon(); });
+  $("search").addEventListener("input", refresh);
+  $("sortBy").addEventListener("change", refresh);
+
+  $("showAllLabels").addEventListener("click", async () => renderLabels(await getAllProducts()));
+  $("hideLabels").addEventListener("click", () => { $("labels").innerHTML = ""; $("labels").classList.add("hidden"); });
+  $("printLabels").addEventListener("click", () => window.print());
+
+  $("exportCsv").addEventListener("click", exportCsv);
+  $("importCsvBtn").addEventListener("click", () => $("importCsvFile").click());
+  $("importCsvFile").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (file) await importCsv(file);
+    e.target.value = "";
+  });
+
+  $("exportFull").addEventListener("click", exportFullBackup);
+  $("importFullBtn").addEventListener("click", () => $("importFullFile").click());
+  $("importFullFile").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (file) await importFullBackup(file);
+    e.target.value = "";
+  });
+
+  $("deleteAll").addEventListener("click", deleteAllData);
+}
+
+async function init() {
+  if (!("indexedDB" in window)) {
+    setStatus("Fehler: IndexedDB wird in diesem Browser nicht unterstützt.", "bad");
+    return;
+  }
+
+  try {
+    await openDb();
+    bindEvents();
+    loadSettings();
+    loadSectionState();
+    await refresh();
+    setStatus("Bereit. Version 3.4 ist aktiv. MagnetNummer ist verfügbar.", "ok");
+    focusScanSoon();
+
+    if ("serviceWorker" in navigator) {
+      try { await navigator.serviceWorker.register("./sw.js"); }
+      catch (err) { console.warn("Service Worker konnte nicht registriert werden:", err); }
+    }
+  } catch (err) {
+    console.error(err);
+    setStatus("Startfehler: " + (err.message || err), "bad");
+  }
+}
+
+init();
+</script>
+</body>
+</html>
