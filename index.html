@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.1</title>
+  <title>Bestand Scanner v3.2</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -244,7 +244,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.1: Barcode · Bestand · Bild</p>
+    <p>Offline-Lagerverwaltung v3.2: Barcode · Bestand · Bild · Kategorie · Maße</p>
   </header>
 
   <main>
@@ -288,6 +288,16 @@
       <input id="unknownBarcode" autocomplete="off">
       <label for="unknownStock">Startbestand</label>
       <input id="unknownStock" type="number" step="1" value="0">
+      <div class="row">
+        <div>
+          <label for="unknownCategory">Kategorie</label>
+          <input id="unknownCategory" autocomplete="off" placeholder="optional">
+        </div>
+        <div>
+          <label for="unknownDimensions">Maße</label>
+          <input id="unknownDimensions" autocomplete="off" placeholder="optional">
+        </div>
+      </div>
       <label for="unknownImage">Bild optional, JPG 100 × 100 Pixel</label>
       <input id="unknownImage" type="file" accept="image/jpeg,image/jpg">
       <div class="actions" style="margin-top:12px">
@@ -308,6 +318,16 @@
           <input id="stock" type="number" step="1" value="0">
         </div>
       </div>
+      <div class="row">
+        <div>
+          <label for="category">Kategorie</label>
+          <input id="category" autocomplete="off" placeholder="z. B. Schrauben, Kabel, Ersatzteile">
+        </div>
+        <div>
+          <label for="dimensions">Maße</label>
+          <input id="dimensions" autocomplete="off" placeholder="z. B. 10 × 20 mm">
+        </div>
+      </div>
 
       <label for="imageFile">Bild, JPG 100 × 100 Pixel</label>
       <input id="imageFile" type="file" accept="image/jpeg,image/jpg">
@@ -323,7 +343,23 @@
 
     <section class="card">
       <h2>3. Artikelliste</h2>
-      <input id="search" autocomplete="off" placeholder="Suchen nach Artikelnummer / Barcode …">
+      <div class="row">
+        <div>
+          <label for="search">Suche</label>
+          <input id="search" autocomplete="off" placeholder="Artikelnummer, Kategorie oder Maße …">
+        </div>
+        <div>
+          <label for="sortBy">Sortieren nach</label>
+          <select id="sortBy">
+            <option value="barcode-asc">Artikelnummer aufsteigend</option>
+            <option value="barcode-desc">Artikelnummer absteigend</option>
+            <option value="stock-asc">Bestand aufsteigend</option>
+            <option value="stock-desc">Bestand absteigend</option>
+            <option value="category-asc">Kategorie aufsteigend</option>
+            <option value="category-desc">Kategorie absteigend</option>
+          </select>
+        </div>
+      </div>
       <p id="summary" class="hint"></p>
       <div style="overflow:auto; margin-top:8px">
         <table>
@@ -331,6 +367,8 @@
             <tr>
               <th>Bild</th>
               <th>Artikelnummer / Barcode</th>
+              <th>Kategorie</th>
+              <th>Maße</th>
               <th>Bestand</th>
               <th>Aktion</th>
             </tr>
@@ -355,7 +393,7 @@
 
     <section class="card">
       <h2>5. Sicherung / Import</h2>
-      <p class="hint">CSV enthält nur Artikelnummer und Bestand. Das Vollbackup enthält zusätzlich die Bilder.</p>
+      <p class="hint">CSV enthält Artikelnummer, Bestand, Kategorie und Maße. Das Vollbackup enthält zusätzlich die Bilder.</p>
       <div class="actions">
         <button id="exportCsv" type="button">CSV exportieren</button>
         <button id="importCsvBtn" class="secondary" type="button">CSV importieren</button>
@@ -367,7 +405,6 @@
       <input id="importCsvFile" class="hidden" type="file" accept=".csv,text/csv,text/plain">
       <input id="importFullFile" class="hidden" type="file" accept=".json,application/json">
       <div class="actions" style="margin-top:10px">
-        <button id="demoData" class="secondary" type="button">Demo-Artikel anlegen</button>
         <button id="deleteAll" class="bad" type="button">Alle Artikel löschen</button>
       </div>
     </section>
@@ -428,6 +465,8 @@ function putProduct(product) {
     const clean = {
       barcode: String(product.barcode || "").trim(),
       stock: Number(product.stock || 0),
+      category: String(product.category || "").trim(),
+      dimensions: String(product.dimensions || product.maße || product.masse || "").trim(),
       image: product.image || "",
       updatedAt: now,
       createdAt: product.createdAt || now
@@ -453,11 +492,12 @@ function getAllProducts() {
       const rows = (req.result || []).map(p => ({
         barcode: String(p.barcode || "").trim(),
         stock: Number(p.stock || 0),
+        category: String(p.category || "").trim(),
+        dimensions: String(p.dimensions || p.maße || p.masse || "").trim(),
         image: p.image || "",
         createdAt: p.createdAt || "",
         updatedAt: p.updatedAt || ""
       })).filter(p => p.barcode);
-      rows.sort((a,b) => a.barcode.localeCompare(b.barcode, "de", { numeric: true }));
       resolve(rows);
     };
     req.onerror = () => reject(req.error);
@@ -574,6 +614,8 @@ async function processBarcode(raw) {
     $("unknownCard").classList.remove("hidden");
     $("unknownBarcode").value = barcode;
     $("unknownStock").value = "0";
+    $("unknownCategory").value = "";
+    $("unknownDimensions").value = "";
     setStatus("Unbekannter Code: " + barcode + "\nBitte Artikel anlegen.", "warn");
     $("scanInput").value = "";
     setTimeout(() => $("unknownStock").focus(), 100);
@@ -648,6 +690,8 @@ async function saveProductFromForm() {
     ...(old || {}),
     barcode,
     stock: intVal("stock", 0),
+    category: $("category").value.trim(),
+    dimensions: $("dimensions").value.trim(),
     image: $("currentImage").value || ""
   });
   clearProductForm();
@@ -659,6 +703,8 @@ async function saveProductFromForm() {
 function clearProductForm() {
   $("barcode").value = "";
   $("stock").value = "0";
+  $("category").value = "";
+  $("dimensions").value = "";
   $("imageFile").value = "";
   updateImagePreview("");
 }
@@ -666,6 +712,8 @@ function clearProductForm() {
 function editProduct(product) {
   $("barcode").value = product.barcode || "";
   $("stock").value = product.stock ?? 0;
+  $("category").value = product.category || "";
+  $("dimensions").value = product.dimensions || "";
   $("imageFile").value = "";
   updateImagePreview(product.image || "");
   window.scrollTo({ top: $("barcode").getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
@@ -680,6 +728,8 @@ async function saveUnknownAndBook() {
   await putProduct({
     barcode,
     stock: intVal("unknownStock", 0),
+    category: $("unknownCategory").value.trim(),
+    dimensions: $("unknownDimensions").value.trim(),
     image
   });
   $("unknownCard").classList.add("hidden");
@@ -707,11 +757,25 @@ async function adjustStock(barcode, delta) {
 async function refresh() {
   const products = await getAllProducts();
   const query = $("search").value.trim().toLowerCase();
-  const filtered = products.filter(p => !query || p.barcode.toLowerCase().includes(query));
+  const filtered = products.filter(p => {
+    const haystack = `${p.barcode} ${p.category || ""} ${p.dimensions || ""}`.toLowerCase();
+    return !query || haystack.includes(query);
+  });
+
+  const sortBy = $("sortBy") ? $("sortBy").value : "barcode-asc";
+  filtered.sort((a, b) => {
+    if (sortBy === "stock-asc") return Number(a.stock || 0) - Number(b.stock || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "stock-desc") return Number(b.stock || 0) - Number(a.stock || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "category-asc") return (a.category || "").localeCompare(b.category || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "category-desc") return (b.category || "").localeCompare(a.category || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "barcode-desc") return b.barcode.localeCompare(a.barcode, "de", { numeric: true });
+    return a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+  });
 
   const totalStock = products.reduce((sum, p) => sum + Number(p.stock || 0), 0);
   const withImages = products.filter(p => !!p.image).length;
-  $("summary").textContent = `${products.length} Artikel · Gesamtbestand ${totalStock} · ${withImages} mit Bild`;
+  const categories = new Set(products.map(p => p.category).filter(Boolean)).size;
+  $("summary").textContent = `${products.length} Artikel · Gesamtbestand ${totalStock} · ${categories} Kategorien · ${withImages} mit Bild`;
 
   const tbody = $("productRows");
   tbody.innerHTML = "";
@@ -721,6 +785,8 @@ async function refresh() {
     tr.innerHTML = `
       <td>${thumb}</td>
       <td><strong>${escapeHtml(p.barcode)}</strong></td>
+      <td>${escapeHtml(p.category || "")}</td>
+      <td>${escapeHtml(p.dimensions || "")}</td>
       <td><span class="stockbox">${Number(p.stock || 0)}</span></td>
       <td>
         <div class="actions">
@@ -777,9 +843,9 @@ function downloadText(filename, text, type = "text/plain;charset=utf-8") {
 
 async function exportCsv() {
   const products = await getAllProducts();
-  const lines = ["barcode;bestand"];
+  const lines = ["barcode;bestand;kategorie;masse"];
   for (const p of products) {
-    lines.push([p.barcode, p.stock].map(csvEscape).join(";"));
+    lines.push([p.barcode, p.stock, p.category || "", p.dimensions || ""].map(csvEscape).join(";"));
   }
   downloadText("bestand-v3.csv", lines.join("\n"), "text/csv;charset=utf-8");
 }
@@ -818,6 +884,11 @@ async function importCsv(file) {
   const barcodeI = hasHeader ? Math.max(header.indexOf("barcode"), header.indexOf("artikelnummer")) : 0;
   let stockI = hasHeader ? header.indexOf("bestand") : 1;
   if (stockI < 0) stockI = hasHeader ? header.indexOf("stock") : 1;
+  let categoryI = hasHeader ? header.indexOf("kategorie") : 2;
+  if (categoryI < 0) categoryI = hasHeader ? header.indexOf("category") : 2;
+  let dimensionsI = hasHeader ? header.indexOf("maße") : 3;
+  if (dimensionsI < 0) dimensionsI = hasHeader ? header.indexOf("masse") : 3;
+  if (dimensionsI < 0) dimensionsI = hasHeader ? header.indexOf("dimensions") : 3;
 
   let count = 0;
   for (const r of dataRows) {
@@ -828,6 +899,8 @@ async function importCsv(file) {
       ...(old || {}),
       barcode,
       stock: parseInt(r[stockI >= 0 ? stockI : 1], 10) || 0,
+      category: (r[categoryI >= 0 ? categoryI : 2] || old?.category || "").trim(),
+      dimensions: (r[dimensionsI >= 0 ? dimensionsI : 3] || old?.dimensions || "").trim(),
       image: old?.image || ""
     });
     count++;
@@ -866,21 +939,13 @@ async function importFullBackup(file) {
     await putProduct({
       barcode,
       stock: Number(p.stock || 0),
+      category: p.category || "",
+      dimensions: p.dimensions || p.maße || p.masse || "",
       image: p.image || ""
     });
     count++;
   }
   setStatus(`${count} Artikel aus Vollbackup wiederhergestellt.`, "ok");
-  await refresh();
-}
-
-async function addDemoData() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="#e5e7eb"/><rect x="20" y="20" width="60" height="60" rx="10" fill="#1f2937"/><text x="50" y="57" font-size="18" text-anchor="middle" fill="white" font-family="Arial">ART</text></svg>`;
-  const demoImage = "data:image/svg+xml;base64," + btoa(svg);
-  await putProduct({ barcode: "ART-000001", stock: 10, image: demoImage });
-  await putProduct({ barcode: "ART-000002", stock: 0, image: "" });
-  await putProduct({ barcode: "4012345678901", stock: 25, image: "" });
-  setStatus("Demo-Artikel angelegt. Scanne/eintippe ART-000001 und Enter.", "ok");
   await refresh();
 }
 
@@ -907,6 +972,13 @@ async function renderLabels(products) {
     code.className = "label-code";
     code.textContent = p.barcode;
     card.appendChild(code);
+
+    if (p.category || p.dimensions) {
+      const meta = document.createElement("div");
+      meta.className = "label-stock";
+      meta.textContent = [p.category, p.dimensions].filter(Boolean).join(" · ");
+      card.appendChild(meta);
+    }
 
     const stock = document.createElement("div");
     stock.className = "label-stock";
@@ -993,6 +1065,7 @@ function bindEvents() {
   $("saveUnknown").addEventListener("click", saveUnknownAndBook);
   $("cancelUnknown").addEventListener("click", () => { $("unknownCard").classList.add("hidden"); focusScanSoon(); });
   $("search").addEventListener("input", refresh);
+  $("sortBy").addEventListener("change", refresh);
 
   $("showAllLabels").addEventListener("click", async () => renderLabels(await getAllProducts()));
   $("hideLabels").addEventListener("click", () => { $("labels").innerHTML = ""; $("labels").classList.add("hidden"); });
@@ -1014,7 +1087,6 @@ function bindEvents() {
     e.target.value = "";
   });
 
-  $("demoData").addEventListener("click", addDemoData);
   $("deleteAll").addEventListener("click", deleteAllData);
 }
 
@@ -1029,7 +1101,7 @@ async function init() {
     bindEvents();
     loadSettings();
     await refresh();
-    setStatus("Bereit. Version 3.1 ist aktiv. QR-Codes werden jetzt mit zuverlässiger lokaler QR-Bibliothek erzeugt.", "ok");
+    setStatus("Bereit. Version 3.2 ist aktiv. Kategorie und Maße sind verfügbar.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {

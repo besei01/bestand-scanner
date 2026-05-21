@@ -1,7 +1,7 @@
 {
   "name": "Bestand Scanner",
   "short_name": "Bestand",
-  "description": "Offline-Bestandsverwaltung v3.1 mit zuverlässigen QR-Codes",
+  "description": "Offline-Bestandsverwaltung v3.2 mit Barcode, Bestand, Bild, Kategorie und Maße",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
