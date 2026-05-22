@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.14</title>
+  <title>Bestand Scanner v3.15</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -613,7 +613,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.14: Verkauf · Märkte · Preis · Historie</p>
+    <p>Offline-Lagerverwaltung v3.15: Verkauf · Märkte · Preis · Historie</p>
   </header>
 
   <main>
@@ -723,7 +723,7 @@
 
     <section id="unknownCard" class="card hidden">
       <h2>Unbekannten Artikel anlegen</h2>
-      <p class="hint">Dieser Code ist noch nicht bekannt. Lege den Artikel an, danach wird der Scan gebucht.</p>
+      <p class="hint">Artikel können hier manuell angelegt werden. Unbekannte Scans werden nicht automatisch angelegt.</p>
       <label for="unknownBarcode">Artikelnummer / Barcode</label>
       <input id="unknownBarcode" autocomplete="off">
       <div class="row">
@@ -1360,16 +1360,10 @@ async function processBarcode(raw) {
   const product = await getProduct(barcode);
 
   if (!product) {
-    $("unknownCard").classList.remove("hidden");
-    $("unknownBarcode").value = barcode;
-    $("unknownStock").value = "0";
-    $("unknownPrice").value = "0,00";
-    $("unknownCategory").value = "";
-    $("unknownDimensions").value = "";
-    $("unknownMagnetNumber").value = "";
-    setStatus("Unbekannter Code: " + barcode + "\nBitte Artikel anlegen.", "warn");
+    $("unknownCard").classList.add("hidden");
+    setStatus("Unbekannter Code: " + barcode + "\nDieser QR-/Barcode ist nicht in der Artikelliste vorhanden. Es wurde nichts gebucht.", "bad");
     $("scanInput").value = "";
-    setTimeout(() => $("unknownStock").focus(), 100);
+    focusScanSoon();
     return;
   }
 
@@ -2298,7 +2292,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.14 ist aktiv. Verkaufshistorie kann eingeblendet werden.", "ok");
+    setStatus("Bereit. Version 3.15 ist aktiv. Unbekannte Codes werden nicht automatisch angelegt.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {
