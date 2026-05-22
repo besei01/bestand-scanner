@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.9
+# Bestand Scanner PWA v3.10
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -103,3 +103,10 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 
 - Bereich `Markt / Verkauf` kann ein- und ausgeblendet werden.
 - Der Ein-/Ausblend-Zustand wird lokal gespeichert.
+
+
+## Neu in Version 3.10
+
+- Die feste Schalterleiste unten wurde entfernt.
+- `Scan-Feld`, `Ausgang/Eingang` und `Tastatur an/Scanner-Modus` sind jetzt klein im Bereich `1. Scannen` integriert.
+- Dadurch bleibt unten mehr Platz auf dem Handy.

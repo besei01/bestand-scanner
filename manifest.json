@@ -1,7 +1,7 @@
 {
   "name": "Bestand Scanner",
   "short_name": "Bestand",
-  "description": "Offline-Bestandsverwaltung v3.9 mit einklappbaren Märkten",
+  "description": "Offline-Bestandsverwaltung v3.10 mit integrierten Scan-Schaltern",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
