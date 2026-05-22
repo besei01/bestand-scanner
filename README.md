@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.5
+# Bestand Scanner PWA v3.7
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -68,3 +68,22 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Auf dem Handy ist kein seitliches Wischen mehr nötig.
 - Bereich `3. Artikelliste` kann ebenfalls ein- und ausgeblendet werden.
 - Der Ein-/Ausblend-Zustand wird lokal gespeichert.
+
+
+## Neu in Version 3.6
+
+- QR-Code-/Etikettenbereich wurde entfernt.
+- Neuer Bereich `4. Bestandsübersicht / Drucken`.
+- Bestandsübersicht kann gefiltert werden:
+  - Kategorie
+  - Suchtext
+  - Bestand = 0 / Bestand ≠ 0 / alle
+- Drucklayout ist kompakt und papiersparend.
+- Über den Druckdialog kann die Übersicht als PDF gespeichert werden.
+
+
+## Neu in Version 3.7
+
+- Die Bestandsübersicht enthält jetzt eine Bildspalte.
+- Bilder werden in der Druckansicht und im PDF klein mit ausgegeben.
+- Das Drucklayout bleibt kompakt und papiersparend.

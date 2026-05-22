@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.5</title>
+  <title>Bestand Scanner v3.7</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -245,7 +245,7 @@
     }
     .product-actions {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 6px;
       margin-top: 9px;
     }
@@ -254,6 +254,72 @@
       width: 100%;
       padding: 8px 6px;
       font-size: 12px;
+    }
+    .report-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .report-preview {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: white;
+    }
+    .report-title {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: #f9fafb;
+      font-weight: 800;
+    }
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .report-table th,
+    .report-table td {
+      padding: 6px 7px;
+      border-bottom: 1px solid #e5e7eb;
+      vertical-align: top;
+    }
+    .report-table th {
+      background: #f9fafb;
+      color: #374151;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .report-summary {
+      padding: 8px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      border-top: 1px solid var(--border);
+      background: #f9fafb;
+    }
+    .report-img {
+      width: 34px;
+      height: 34px;
+      object-fit: cover;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      display: block;
+      background: #f9fafb;
+    }
+    .report-no-img {
+      width: 34px;
+      height: 34px;
+      border: 1px dashed #d1d5db;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      color: #9ca3af;
+      font-size: 9px;
+      background: #f9fafb;
+    }
+    .print-report {
+      display: none;
     }
     .hidden { display: none !important; }
     .footerbar {
@@ -325,6 +391,9 @@
       .product-actions button:first-child {
         grid-column: span 2;
       }
+      .report-controls {
+        grid-template-columns: 1fr;
+      }
       .product-code {
         font-size: 15px;
       }
@@ -334,43 +403,88 @@
       }
     }
     @media print {
-      header, main > section:not(#labelsCard), .footerbar { display: none !important; }
-      body { background: white; }
-      main { max-width: none; padding: 0; }
-      #labelsCard {
+      @page {
+        size: A4 portrait;
+        margin: 8mm;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+        font-family: Arial, sans-serif;
+        font-size: 9pt;
+      }
+      header, main, .footerbar {
+        display: none !important;
+      }
+      .print-report {
         display: block !important;
-        border: none;
-        box-shadow: none;
-        margin: 0;
-        padding: 0;
       }
-      #labelsCard .section-head, #labelsCard .no-print { display: none !important; }
-      .qr-wrap {
-        display: grid;
-        grid-template-columns: repeat(3, 45mm);
-        gap: 6mm;
-        margin: 0;
+      .print-report h1 {
+        font-size: 14pt;
+        margin: 0 0 2mm 0;
       }
-      .label-card {
-        width: 45mm;
-        min-height: 55mm;
-        border: 1px solid #999;
-        border-radius: 0;
-        padding: 4mm;
+      .print-meta {
+        font-size: 8pt;
+        margin-bottom: 3mm;
+        color: #333;
       }
-      .label-card canvas {
-        width: 32mm;
-        height: 32mm;
+      .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 8pt;
       }
-      .label-code { font-size: 10pt; }
-      .label-stock { font-size: 8pt; }
+      .print-table th,
+      .print-table td {
+        border: 0.2mm solid #bbb;
+        padding: 1mm 1.2mm;
+        vertical-align: top;
+      }
+      .print-table th {
+        background: #eee !important;
+        font-weight: bold;
+      }
+      .print-table td.image,
+      .print-table th.image {
+        width: 13mm;
+        text-align: center;
+      }
+      .print-table img.print-img {
+        width: 10mm;
+        height: 10mm;
+        object-fit: cover;
+        display: block;
+        margin: 0 auto;
+      }
+      .print-table .print-no-img {
+        width: 10mm;
+        height: 10mm;
+        border: 0.2mm dashed #bbb;
+        margin: 0 auto;
+      }
+      .print-table td.stock,
+      .print-table th.stock {
+        text-align: right;
+        width: 14mm;
+      }
+      .print-table td.magnet,
+      .print-table th.magnet {
+        width: 22mm;
+      }
+      .print-table td.dim,
+      .print-table th.dim {
+        width: 22mm;
+      }
+      .print-summary {
+        margin-top: 3mm;
+        font-size: 8pt;
+      }
     }
   </style>
 </head>
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.5: Barcode · Bestand · Bild · Kategorie · Maße · MagnetNummer</p>
+    <p>Offline-Lagerverwaltung v3.7: Barcode · Bestand · Bild · Kategorie · Maße · MagnetNummer</p>
   </header>
 
   <main>
@@ -510,21 +624,51 @@
       </div>
     </section>
 
-    <section id="labelsCard" class="card">
-      <div class="section-head no-print">
-        <h2>4. QR-Codes / Etiketten</h2>
-        <button id="toggleLabelsSection" class="toggle-section" type="button">Ausblenden</button>
+    <section id="reportCard" class="card">
+      <div class="section-head">
+        <h2>4. Bestandsübersicht / Drucken</h2>
+        <button id="toggleReportSection" class="toggle-section" type="button">Ausblenden</button>
       </div>
-      <div id="labelsSectionBody" class="collapsible-body">
-      <div class="no-print">
-        <p class="hint">QR-Codes werden live aus der Artikelnummer erzeugt und nicht in der Datenbank gespeichert.</p>
-        <div class="actions">
-          <button id="showAllLabels" type="button">Alle QR-Codes anzeigen</button>
-          <button id="printLabels" class="secondary" type="button">Drucken</button>
-          <button id="hideLabels" class="secondary" type="button">QR-Codes ausblenden</button>
+      <div id="reportSectionBody" class="collapsible-body">
+        <p class="hint">Die Übersicht ist für Papier/PDF kompakt optimiert. Bilder werden klein mitgedruckt.</p>
+        <div class="report-controls">
+          <div>
+            <label for="reportCategory">Kategorie filtern</label>
+            <select id="reportCategory">
+              <option value="">Alle Kategorien</option>
+            </select>
+          </div>
+          <div>
+            <label for="reportSearch">Zusatzfilter</label>
+            <input id="reportSearch" autocomplete="off" placeholder="Artikelnummer, Maße, MagnetNummer …">
+          </div>
         </div>
-      </div>
-      <div id="labels" class="qr-wrap hidden"></div>
+        <div class="report-controls">
+          <div>
+            <label for="reportSort">Sortierung</label>
+            <select id="reportSort">
+              <option value="category-asc">Kategorie + Artikelnummer</option>
+              <option value="barcode-asc">Artikelnummer aufsteigend</option>
+              <option value="stock-asc">Bestand aufsteigend</option>
+              <option value="stock-desc">Bestand absteigend</option>
+              <option value="magnet-asc">MagnetNummer aufsteigend</option>
+              <option value="magnet-desc">MagnetNummer absteigend</option>
+            </select>
+          </div>
+          <div>
+            <label for="reportZero">Bestände</label>
+            <select id="reportZero">
+              <option value="all">Alle Artikel</option>
+              <option value="nonzero">Nur Bestand ≠ 0</option>
+              <option value="zero">Nur Bestand = 0</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button id="updateReport" type="button">Vorschau aktualisieren</button>
+          <button id="printReport" class="good" type="button">Drucken / als PDF sichern</button>
+        </div>
+        <div id="reportPreview" class="report-preview"></div>
       </div>
     </section>
 
@@ -552,6 +696,8 @@
     </section>
   </main>
 
+  <div id="printReportArea" class="print-report"></div>
+
   <div class="footerbar">
     <div>
       <button id="focusScan" type="button">Scan-Feld aktivieren</button>
@@ -574,7 +720,7 @@ const $ = (id) => document.getElementById(id);
 const COLLAPSIBLE_SECTIONS = [
   { key: "edit", body: "editSectionBody", button: "toggleEditSection" },
   { key: "list", body: "listSectionBody", button: "toggleListSection" },
-  { key: "labels", body: "labelsSectionBody", button: "toggleLabelsSection" },
+  { key: "report", body: "reportSectionBody", button: "toggleReportSection" },
   { key: "backup", body: "backupSectionBody", button: "toggleBackupSection" }
 ];
 
@@ -623,8 +769,8 @@ function openSection(key) {
   applySectionState(key, false);
 }
 
-function openLabelsSection() {
-  openSection("labels");
+function openReportSection() {
+  openSection("report");
 }
 
 function openEditSection() {
@@ -1014,7 +1160,6 @@ async function refresh() {
           <button class="secondary" data-edit="${escapeAttr(p.barcode)}" type="button">Bearbeiten</button>
           <button class="good" data-plus="${escapeAttr(p.barcode)}" type="button">+1</button>
           <button class="warn" data-minus="${escapeAttr(p.barcode)}" type="button">−1</button>
-          <button class="secondary" data-qr="${escapeAttr(p.barcode)}" type="button">QR</button>
           <button class="bad" data-del="${escapeAttr(p.barcode)}" type="button">Löschen</button>
         </div>
       </div>
@@ -1025,10 +1170,10 @@ async function refresh() {
   list.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", async () => editProduct(await getProduct(btn.getAttribute("data-edit")))));
   list.querySelectorAll("[data-plus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-plus"), 1)));
   list.querySelectorAll("[data-minus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-minus"), -1)));
-  list.querySelectorAll("[data-qr]").forEach(btn => btn.addEventListener("click", async () => {
-    const p = await getProduct(btn.getAttribute("data-qr"));
-    if (p) renderLabels([p]);
-  }));
+
+  await updateReportCategoryOptions(products);
+  if ($("reportPreview")) updateReportPreview();
+
   list.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", async () => {
     const barcode = btn.getAttribute("data-del");
     if (confirm(`Artikel ${barcode} wirklich löschen?`)) {
@@ -1257,6 +1402,148 @@ function drawQrCode(canvas, text) {
   });
 }
 
+
+function sortProductsForReport(rows, sortBy) {
+  const copy = [...rows];
+  copy.sort((a,b) => {
+    if (sortBy === "stock-asc") return Number(a.stock || 0) - Number(b.stock || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "stock-desc") return Number(b.stock || 0) - Number(a.stock || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "magnet-asc") return (a.magnetNumber || "").localeCompare(b.magnetNumber || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "magnet-desc") return (b.magnetNumber || "").localeCompare(a.magnetNumber || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "barcode-asc") return a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    return (a.category || "").localeCompare(b.category || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+  });
+  return copy;
+}
+
+async function updateReportCategoryOptions(products = null) {
+  const rows = products || await getAllProducts();
+  const select = $("reportCategory");
+  if (!select) return;
+  const current = select.value;
+  const categories = [...new Set(rows.map(p => p.category || "").filter(Boolean))]
+    .sort((a,b) => a.localeCompare(b, "de", { numeric: true }));
+
+  select.innerHTML = `<option value="">Alle Kategorien</option>`;
+  for (const cat of categories) {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    select.appendChild(opt);
+  }
+  if (categories.includes(current)) select.value = current;
+}
+
+async function getFilteredReportRows() {
+  const products = await getAllProducts();
+  await updateReportCategoryOptions(products);
+
+  const category = $("reportCategory").value;
+  const query = $("reportSearch").value.trim().toLowerCase();
+  const zeroMode = $("reportZero").value;
+  const sortBy = $("reportSort").value;
+
+  let rows = products.filter(p => {
+    if (category && (p.category || "") !== category) return false;
+    if (zeroMode === "zero" && Number(p.stock || 0) !== 0) return false;
+    if (zeroMode === "nonzero" && Number(p.stock || 0) === 0) return false;
+
+    if (query) {
+      const haystack = `${p.barcode} ${p.category || ""} ${p.dimensions || ""} ${p.magnetNumber || ""}`.toLowerCase();
+      if (!haystack.includes(query)) return false;
+    }
+    return true;
+  });
+
+  rows = sortProductsForReport(rows, sortBy);
+  return rows;
+}
+
+function buildReportTable(rows, forPrint = false) {
+  const totalStock = rows.reduce((sum, p) => sum + Number(p.stock || 0), 0);
+  const generated = new Date().toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+  const category = $("reportCategory")?.value || "Alle Kategorien";
+  const query = $("reportSearch")?.value.trim() || "—";
+  const zeroMode = $("reportZero")?.value || "all";
+  const zeroText = zeroMode === "zero" ? "Nur Bestand = 0" : zeroMode === "nonzero" ? "Nur Bestand ≠ 0" : "Alle Artikel";
+  const imageCell = (p, printMode) => {
+    if (p.image) {
+      return printMode
+        ? `<img class="print-img" src="${escapeAttr(p.image)}" alt="">`
+        : `<img class="report-img" src="${escapeAttr(p.image)}" alt="">`;
+    }
+    return printMode ? `<div class="print-no-img"></div>` : `<div class="report-no-img">—</div>`;
+  };
+
+  const rowsHtml = rows.map((p, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td class="image">${imageCell(p, forPrint)}</td>
+      <td>${escapeHtml(p.barcode)}</td>
+      <td>${escapeHtml(p.category || "")}</td>
+      <td class="dim">${escapeHtml(p.dimensions || "")}</td>
+      <td class="magnet">${escapeHtml(p.magnetNumber || "")}</td>
+      <td class="stock">${Number(p.stock || 0)}</td>
+    </tr>
+  `).join("");
+
+  if (forPrint) {
+    return `
+      <h1>Bestandsübersicht</h1>
+      <div class="print-meta">
+        Erstellt: ${escapeHtml(generated)} · Kategorie: ${escapeHtml(category)} · Filter: ${escapeHtml(query)} · ${escapeHtml(zeroText)}
+      </div>
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th class="image">Bild</th>
+            <th>Artikelnummer</th>
+            <th>Kategorie</th>
+            <th class="dim">Maße</th>
+            <th class="magnet">MagnetNr.</th>
+            <th class="stock">Bestand</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+      <div class="print-summary">${rows.length} Artikel · Gesamtbestand ${totalStock}</div>
+    `;
+  }
+
+  return `
+    <div class="report-title">Vorschau: ${rows.length} Artikel · Gesamtbestand ${totalStock}</div>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Bild</th>
+          <th>Artikelnummer</th>
+          <th>Kategorie</th>
+          <th>Maße</th>
+          <th>MagnetNr.</th>
+          <th>Bestand</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml || `<tr><td colspan="7">Keine Artikel für diesen Filter.</td></tr>`}</tbody>
+    </table>
+    <div class="report-summary">Kategorie: ${escapeHtml(category)} · Filter: ${escapeHtml(query)} · ${escapeHtml(zeroText)}</div>
+  `;
+}
+
+async function updateReportPreview() {
+  const rows = await getFilteredReportRows();
+  $("reportPreview").innerHTML = buildReportTable(rows, false);
+}
+
+async function printInventoryReport() {
+  openReportSection();
+  const rows = await getFilteredReportRows();
+  $("printReportArea").innerHTML = buildReportTable(rows, true);
+  window.print();
+}
+
+
 function bindEvents() {
   $("modeOut").addEventListener("click", () => setMode("out"));
   $("modeIn").addEventListener("click", () => setMode("in"));
@@ -1265,7 +1552,7 @@ function bindEvents() {
   $("keyboardToggle").addEventListener("click", toggleKeyboardMode);
   $("toggleEditSection").addEventListener("click", () => toggleSection("edit"));
   $("toggleListSection").addEventListener("click", () => toggleSection("list"));
-  $("toggleLabelsSection").addEventListener("click", () => toggleSection("labels"));
+  $("toggleReportSection").addEventListener("click", () => toggleSection("report"));
   $("toggleBackupSection").addEventListener("click", () => toggleSection("backup"));
 
   ["scanKeyboard", "doubleScanGuard", "preventNegative"].forEach(id => {
@@ -1299,9 +1586,12 @@ function bindEvents() {
   $("search").addEventListener("input", refresh);
   $("sortBy").addEventListener("change", refresh);
 
-  $("showAllLabels").addEventListener("click", async () => renderLabels(await getAllProducts()));
-  $("hideLabels").addEventListener("click", () => { $("labels").innerHTML = ""; $("labels").classList.add("hidden"); });
-  $("printLabels").addEventListener("click", () => window.print());
+  $("updateReport").addEventListener("click", updateReportPreview);
+  $("printReport").addEventListener("click", printInventoryReport);
+  ["reportCategory", "reportSearch", "reportSort", "reportZero"].forEach(id => {
+    $(id).addEventListener("input", updateReportPreview);
+    $(id).addEventListener("change", updateReportPreview);
+  });
 
   $("exportCsv").addEventListener("click", exportCsv);
   $("importCsvBtn").addEventListener("click", () => $("importCsvFile").click());
@@ -1334,7 +1624,8 @@ async function init() {
     loadSettings();
     loadSectionState();
     await refresh();
-    setStatus("Bereit. Version 3.5 ist aktiv. Die Artikelliste ist handyfreundlich und einklappbar.", "ok");
+    await updateReportPreview();
+    setStatus("Bereit. Version 3.7 ist aktiv. Bestandsübersicht druckt Bilder mit.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {
