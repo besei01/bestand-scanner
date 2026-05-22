@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.13
+# Bestand Scanner PWA v3.14
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -136,3 +136,13 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Der `−1`-Button schreibt keine Verkaufshistorie.
 - Verkäufe per Scanner im Modus `Warenausgang −` bleiben weiterhin nur mit aktivem Markt möglich.
 - Der aktive Markt wird oben im Bereich `1. Scannen` angezeigt.
+
+
+## Neu in Version 3.14
+
+- Eigener Bereich `Verkaufshistorie`
+- Verkaufshistorie kann ein- und ausgeblendet werden
+- Filter nach Markt
+- Suche nach Artikelnummer
+- Anzeige der letzten 50/100/250 oder aller Verkaufseinträge
+- Zusammenfassung mit Menge und Umsatz

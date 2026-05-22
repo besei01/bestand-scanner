@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.13</title>
+  <title>Bestand Scanner v3.14</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -397,6 +397,43 @@
       color: var(--muted);
       margin-top: 3px;
     }
+    .sales-history-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .sales-history-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .sales-history-row {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 9px 10px;
+      background: #fff;
+      font-size: 13px;
+    }
+    .sales-history-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 850;
+      align-items: flex-start;
+    }
+    .sales-history-code {
+      word-break: break-word;
+    }
+    .sales-history-sum {
+      white-space: nowrap;
+    }
+    .sales-history-meta {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
     .print-report {
       display: none;
     }
@@ -468,6 +505,12 @@
       }
       .report-controls {
         grid-template-columns: 1fr;
+      }
+      .sales-history-controls {
+        grid-template-columns: 1fr;
+      }
+      .sales-history-meta {
+        grid-template-columns: 1fr 1fr;
       }
       .market-row {
         grid-template-columns: 1fr;
@@ -570,7 +613,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.13: Verkauf · Märkte · Preis · Historie</p>
+    <p>Offline-Lagerverwaltung v3.14: Verkauf · Märkte · Preis · Historie</p>
   </header>
 
   <main>
@@ -642,6 +685,39 @@
       <div id="marketList" class="market-list"></div>
       <h3 style="font-size:15px;margin:14px 0 6px">Letzte Verkäufe</h3>
       <div id="recentSales" class="sales-list"></div>
+      </div>
+    </section>
+
+    <section class="card" id="salesHistoryCard">
+      <div class="section-head">
+        <h2>Verkaufshistorie</h2>
+        <button id="toggleSalesHistorySection" class="toggle-section" type="button">Ausblenden</button>
+      </div>
+      <div id="salesHistorySectionBody" class="collapsible-body">
+        <p class="hint">Hier siehst du die gespeicherten Verkäufe. Verkäufe entstehen nur beim Scannen im Modus Warenausgang mit aktivem Markt.</p>
+        <div class="sales-history-controls">
+          <div>
+            <label for="salesHistoryMarketFilter">Markt filtern</label>
+            <select id="salesHistoryMarketFilter">
+              <option value="">Alle Märkte</option>
+            </select>
+          </div>
+          <div>
+            <label for="salesHistorySearch">Artikel suchen</label>
+            <input id="salesHistorySearch" autocomplete="off" placeholder="Artikelnummer …">
+          </div>
+          <div>
+            <label for="salesHistoryLimit">Anzeigen</label>
+            <select id="salesHistoryLimit">
+              <option value="50">Letzte 50</option>
+              <option value="100">Letzte 100</option>
+              <option value="250">Letzte 250</option>
+              <option value="all">Alle</option>
+            </select>
+          </div>
+        </div>
+        <p id="salesHistorySummary" class="hint"></p>
+        <div id="salesHistoryRows" class="sales-history-list"></div>
       </div>
     </section>
 
@@ -854,6 +930,7 @@ const $ = (id) => document.getElementById(id);
 
 const COLLAPSIBLE_SECTIONS = [
   { key: "market", body: "marketSectionBody", button: "toggleMarketSection" },
+  { key: "salesHistory", body: "salesHistorySectionBody", button: "toggleSalesHistorySection" },
   { key: "edit", body: "editSectionBody", button: "toggleEditSection" },
   { key: "list", body: "listSectionBody", button: "toggleListSection" },
   { key: "report", body: "reportSectionBody", button: "toggleReportSection" },
@@ -1808,6 +1885,72 @@ function drawQrCode(canvas, text) {
 
 
 
+
+async function refreshSalesHistory() {
+  const select = $("salesHistoryMarketFilter");
+  if (!select) return;
+
+  const markets = await getAllMarkets();
+  const currentMarket = select.value;
+  select.innerHTML = `<option value="">Alle Märkte</option>`;
+  for (const market of markets) {
+    const opt = document.createElement("option");
+    opt.value = market.id;
+    opt.textContent = market.name;
+    select.appendChild(opt);
+  }
+  if (currentMarket && markets.some(m => m.id === currentMarket)) select.value = currentMarket;
+
+  const marketFilter = select.value;
+  const query = $("salesHistorySearch").value.trim().toLowerCase();
+  const limitValue = $("salesHistoryLimit").value;
+
+  let rows = await getAllSales();
+  rows = rows.filter(s => {
+    if (marketFilter && s.marketId !== marketFilter) return false;
+    if (query && !String(s.barcode || "").toLowerCase().includes(query)) return false;
+    return true;
+  });
+
+  const totalQty = rows.reduce((sum, s) => sum + Number(s.quantity || 0), 0);
+  const totalRevenue = rows.reduce((sum, s) => sum + Number(s.total || 0), 0);
+
+  let displayed = rows;
+  if (limitValue !== "all") {
+    displayed = rows.slice(0, Number(limitValue || 50));
+  }
+
+  $("salesHistorySummary").textContent =
+    `${rows.length} Verkaufseinträge · Menge ${totalQty} · Umsatz ${formatMoney(totalRevenue)}` +
+    (displayed.length !== rows.length ? ` · angezeigt ${displayed.length}` : "");
+
+  const box = $("salesHistoryRows");
+  box.innerHTML = "";
+  if (!displayed.length) {
+    box.innerHTML = `<div class="hint">Keine passenden Verkäufe gefunden.</div>`;
+    return;
+  }
+
+  for (const s of displayed) {
+    const row = document.createElement("div");
+    row.className = "sales-history-row";
+    row.innerHTML = `
+      <div class="sales-history-top">
+        <span class="sales-history-code">${escapeHtml(s.barcode)}</span>
+        <span class="sales-history-sum">${formatMoney(s.total)}</span>
+      </div>
+      <div class="sales-history-meta">
+        <div class="meta-item"><span class="meta-label">Zeit</span><span class="meta-value">${escapeHtml(formatDateTime(s.ts))}</span></div>
+        <div class="meta-item"><span class="meta-label">Markt</span><span class="meta-value">${escapeHtml(s.marketName || "")}</span></div>
+        <div class="meta-item"><span class="meta-label">Menge</span><span class="meta-value">${Number(s.quantity || 0)}</span></div>
+        <div class="meta-item"><span class="meta-label">Preis</span><span class="meta-value">${formatMoney(s.unitPrice)}</span></div>
+      </div>
+      <div class="sale-meta">Bestand: ${Number(s.stockBefore || 0)} → ${Number(s.stockAfter || 0)}</div>
+    `;
+    box.appendChild(row);
+  }
+}
+
 async function refreshMarketsAndSales() {
   const markets = await getAllMarkets();
   let activeId = getActiveMarketId();
@@ -1877,6 +2020,8 @@ async function refreshMarketsAndSales() {
       }
     }
   }
+
+  await refreshSalesHistory();
 }
 
 async function addMarketFromForm() {
@@ -2069,7 +2214,12 @@ function bindEvents() {
   $("clearActiveMarket").addEventListener("click", async () => { setActiveMarketId(""); await refreshMarketsAndSales(); });
   $("activeMarket").addEventListener("change", async (e) => { setActiveMarketId(e.target.value); await refreshMarketsAndSales(); });
   $("newMarketName").addEventListener("keydown", async (e) => { if (e.key === "Enter") { e.preventDefault(); await addMarketFromForm(); } });
+  ["salesHistoryMarketFilter", "salesHistorySearch", "salesHistoryLimit"].forEach(id => {
+    $(id).addEventListener("input", refreshSalesHistory);
+    $(id).addEventListener("change", refreshSalesHistory);
+  });
   $("toggleMarketSection").addEventListener("click", () => toggleSection("market"));
+  $("toggleSalesHistorySection").addEventListener("click", () => toggleSection("salesHistory"));
   $("toggleEditSection").addEventListener("click", () => toggleSection("edit"));
   $("toggleListSection").addEventListener("click", () => toggleSection("list"));
   $("toggleReportSection").addEventListener("click", () => toggleSection("report"));
@@ -2148,7 +2298,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.13 ist aktiv. Aktiver Markt wird im Scanbereich angezeigt.", "ok");
+    setStatus("Bereit. Version 3.14 ist aktiv. Verkaufshistorie kann eingeblendet werden.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {
