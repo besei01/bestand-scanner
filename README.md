@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.10
+# Bestand Scanner PWA v3.11
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -110,3 +110,14 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Die feste Schalterleiste unten wurde entfernt.
 - `Scan-Feld`, `Ausgang/Eingang` und `Tastatur an/Scanner-Modus` sind jetzt klein im Bereich `1. Scannen` integriert.
 - Dadurch bleibt unten mehr Platz auf dem Handy.
+
+
+## Neu in Version 3.11
+
+- `Alle Artikel löschen` ist stärker abgesichert:
+  - Bestätigungsdialog
+  - zusätzliche Texteingabe `ALLE ARTIKEL LÖSCHEN`
+- Neue Funktion `Verkaufshistorie löschen`
+  - löscht nur Verkaufseinträge
+  - Artikel, Bestände und Märkte bleiben erhalten
+  - zusätzliche Texteingabe `VERKÄUFE LÖSCHEN`

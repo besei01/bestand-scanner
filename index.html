@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.10</title>
+  <title>Bestand Scanner v3.11</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -556,7 +556,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.10: Verkauf · Märkte · Preis · Historie</p>
+    <p>Offline-Lagerverwaltung v3.11: Verkauf · Märkte · Preis · Historie</p>
   </header>
 
   <main>
@@ -818,6 +818,7 @@
       <input id="importFullFile" class="hidden" type="file" accept=".json,application/json">
       <div class="actions" style="margin-top:10px">
         <button id="deleteAll" class="bad" type="button">Alle Artikel löschen</button>
+        <button id="deleteSales" class="bad" type="button">Verkaufshistorie löschen</button>
       </div>
       </div>
     </section>
@@ -1656,11 +1657,40 @@ async function importFullBackup(file) {
 }
 
 async function deleteAllData() {
-  if (!confirm("Wirklich ALLE Artikel löschen? Vorher am besten Vollbackup exportieren.")) return;
+  const first = confirm("ACHTUNG: Wirklich ALLE Artikel löschen?\\n\\nBilder, Bestände, Preise, Kategorien und Maße werden gelöscht.\\nMärkte und Verkaufshistorie bleiben erhalten.\\n\\nVorher am besten ein Vollbackup exportieren.");
+  if (!first) return;
+
+  const typed = prompt("Zur Bestätigung bitte genau eingeben:\\nALLE ARTIKEL LÖSCHEN");
+  if (typed !== "ALLE ARTIKEL LÖSCHEN") {
+    setStatus("Löschen abgebrochen. Bestätigung war nicht korrekt.", "warn");
+    return;
+  }
+
   await clearAllProducts();
   clearProductForm();
-  setStatus("Alle Artikel gelöscht.", "warn");
+  setStatus("Alle Artikel wurden gelöscht. Märkte und Verkaufshistorie wurden nicht gelöscht.", "warn");
   await refresh();
+}
+
+async function deleteSalesHistory() {
+  const sales = await getAllSales();
+  if (!sales.length) {
+    setStatus("Keine Verkaufshistorie vorhanden.", "warn");
+    return;
+  }
+
+  const first = confirm(`ACHTUNG: Wirklich die komplette Verkaufshistorie löschen?\\n\\nEs werden ${sales.length} Verkaufseinträge gelöscht.\\nArtikel, Bestände und Märkte bleiben erhalten.\\n\\nVorher am besten die Verkaufshistorie exportieren.`);
+  if (!first) return;
+
+  const typed = prompt("Zur Bestätigung bitte genau eingeben:\\nVERKÄUFE LÖSCHEN");
+  if (typed !== "VERKÄUFE LÖSCHEN") {
+    setStatus("Löschen der Verkaufshistorie abgebrochen. Bestätigung war nicht korrekt.", "warn");
+    return;
+  }
+
+  await clearStore("sales");
+  setStatus(`${sales.length} Verkaufseinträge wurden gelöscht. Artikel, Bestände und Märkte wurden nicht gelöscht.`, "warn");
+  await refreshMarketsAndSales();
 }
 
 async function renderLabels(products) {
@@ -2058,6 +2088,7 @@ function bindEvents() {
   });
 
   $("deleteAll").addEventListener("click", deleteAllData);
+  $("deleteSales").addEventListener("click", deleteSalesHistory);
 }
 
 async function init() {
@@ -2074,7 +2105,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.10 ist aktiv. Die Scan-Schalter sind oben integriert.", "ok");
+    setStatus("Bereit. Version 3.11 ist aktiv. Löschen ist zusätzlich abgesichert.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {
