@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.4
+# Bestand Scanner PWA v3.5
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -60,3 +60,11 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Suche berücksichtigt MagnetNummer
 - Sortierung nach MagnetNummer aufsteigend/absteigend
 - CSV-Export und Vollbackup enthalten MagnetNummer
+
+
+## Neu in Version 3.5
+
+- Die Artikelliste wird als kompakte Karten dargestellt.
+- Auf dem Handy ist kein seitliches Wischen mehr nötig.
+- Bereich `3. Artikelliste` kann ebenfalls ein- und ausgeblendet werden.
+- Der Ein-/Ausblend-Zustand wird lokal gespeichert.

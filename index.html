@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.4</title>
+  <title>Bestand Scanner v3.5</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -171,6 +171,90 @@
       font-weight: 800;
       white-space: nowrap;
     }
+    .product-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .product-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 68px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    .product-main {
+      min-width: 0;
+    }
+    .product-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .product-code {
+      font-weight: 850;
+      font-size: 16px;
+      word-break: break-word;
+      line-height: 1.25;
+    }
+    .stock-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 18px;
+      font-weight: 850;
+      background: #ecfdf5;
+      color: #065f46;
+      white-space: nowrap;
+    }
+    .product-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .meta-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 6px 8px;
+      background: #f9fafb;
+      min-width: 0;
+    }
+    .meta-label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      margin-bottom: 2px;
+    }
+    .meta-value {
+      display: block;
+      font-weight: 700;
+      font-size: 13px;
+      word-break: break-word;
+      min-height: 16px;
+    }
+    .product-actions {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 9px;
+    }
+    .product-actions button {
+      min-width: 0;
+      width: 100%;
+      padding: 8px 6px;
+      font-size: 12px;
+    }
     .hidden { display: none !important; }
     .footerbar {
       position: fixed;
@@ -228,7 +312,26 @@
       main { padding: 10px; padding-bottom: 120px; }
       .card { border-radius: 14px; padding: 12px; }
       .footerbar > div { grid-template-columns: 1fr; }
-      th:nth-child(4), td:nth-child(4) { display: none; }
+      .product-card {
+        grid-template-columns: 62px 1fr;
+        padding: 9px;
+      }
+      .product-meta {
+        grid-template-columns: 1fr;
+      }
+      .product-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .product-actions button:first-child {
+        grid-column: span 2;
+      }
+      .product-code {
+        font-size: 15px;
+      }
+      .stock-pill {
+        font-size: 16px;
+        min-width: 42px;
+      }
     }
     @media print {
       header, main > section:not(#labelsCard), .footerbar { display: none !important; }
@@ -267,7 +370,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.4: Barcode · Bestand · Bild · Kategorie · Maße · MagnetNummer</p>
+    <p>Offline-Lagerverwaltung v3.5: Barcode · Bestand · Bild · Kategorie · Maße · MagnetNummer</p>
   </header>
 
   <main>
@@ -377,43 +480,33 @@
       </div>
     </section>
 
-    <section class="card">
-      <h2>3. Artikelliste</h2>
-      <div class="row">
-        <div>
-          <label for="search">Suche</label>
-          <input id="search" autocomplete="off" placeholder="Artikelnummer, Kategorie, Maße oder MagnetNummer …">
-        </div>
-        <div>
-          <label for="sortBy">Sortieren nach</label>
-          <select id="sortBy">
-            <option value="barcode-asc">Artikelnummer aufsteigend</option>
-            <option value="barcode-desc">Artikelnummer absteigend</option>
-            <option value="stock-asc">Bestand aufsteigend</option>
-            <option value="stock-desc">Bestand absteigend</option>
-            <option value="category-asc">Kategorie aufsteigend</option>
-            <option value="category-desc">Kategorie absteigend</option>
-            <option value="magnet-asc">MagnetNummer aufsteigend</option>
-            <option value="magnet-desc">MagnetNummer absteigend</option>
-          </select>
-        </div>
+    <section class="card" id="listCard">
+      <div class="section-head">
+        <h2>3. Artikelliste</h2>
+        <button id="toggleListSection" class="toggle-section" type="button">Ausblenden</button>
       </div>
-      <p id="summary" class="hint"></p>
-      <div style="overflow:auto; margin-top:8px">
-        <table>
-          <thead>
-            <tr>
-              <th>Bild</th>
-              <th>Artikelnummer / Barcode</th>
-              <th>Kategorie</th>
-              <th>Maße</th>
-              <th>MagnetNummer</th>
-              <th>Bestand</th>
-              <th>Aktion</th>
-            </tr>
-          </thead>
-          <tbody id="productRows"></tbody>
-        </table>
+      <div id="listSectionBody" class="collapsible-body">
+        <div class="row">
+          <div>
+            <label for="search">Suche</label>
+            <input id="search" autocomplete="off" placeholder="Artikelnummer, Kategorie, Maße oder MagnetNummer …">
+          </div>
+          <div>
+            <label for="sortBy">Sortieren nach</label>
+            <select id="sortBy">
+              <option value="barcode-asc">Artikelnummer aufsteigend</option>
+              <option value="barcode-desc">Artikelnummer absteigend</option>
+              <option value="stock-asc">Bestand aufsteigend</option>
+              <option value="stock-desc">Bestand absteigend</option>
+              <option value="category-asc">Kategorie aufsteigend</option>
+              <option value="category-desc">Kategorie absteigend</option>
+              <option value="magnet-asc">MagnetNummer aufsteigend</option>
+              <option value="magnet-desc">MagnetNummer absteigend</option>
+            </select>
+          </div>
+        </div>
+        <p id="summary" class="hint"></p>
+        <div id="productRows" class="product-list"></div>
       </div>
     </section>
 
@@ -480,6 +573,7 @@ const $ = (id) => document.getElementById(id);
 
 const COLLAPSIBLE_SECTIONS = [
   { key: "edit", body: "editSectionBody", button: "toggleEditSection" },
+  { key: "list", body: "listSectionBody", button: "toggleListSection" },
   { key: "labels", body: "labelsSectionBody", button: "toggleLabelsSection" },
   { key: "backup", body: "backupSectionBody", button: "toggleBackupSection" }
 ];
@@ -895,39 +989,47 @@ async function refresh() {
   const withMagnetNumbers = products.filter(p => !!p.magnetNumber).length;
   $("summary").textContent = `${products.length} Artikel · Gesamtbestand ${totalStock} · ${categories} Kategorien · ${withImages} mit Bild · ${withMagnetNumbers} mit MagnetNummer`;
 
-  const tbody = $("productRows");
-  tbody.innerHTML = "";
+  const list = $("productRows");
+  list.innerHTML = "";
   for (const p of filtered) {
-    const tr = document.createElement("tr");
+    const card = document.createElement("div");
+    card.className = "product-card";
     const thumb = p.image ? `<img class="thumb" src="${escapeAttr(p.image)}" alt="">` : `<div class="empty-thumb">kein Bild</div>`;
-    tr.innerHTML = `
-      <td>${thumb}</td>
-      <td><strong>${escapeHtml(p.barcode)}</strong></td>
-      <td>${escapeHtml(p.category || "")}</td>
-      <td>${escapeHtml(p.dimensions || "")}</td>
-      <td>${escapeHtml(p.magnetNumber || "")}</td>
-      <td><span class="stockbox">${Number(p.stock || 0)}</span></td>
-      <td>
-        <div class="actions">
+    const category = p.category || "—";
+    const dimensions = p.dimensions || "—";
+    const magnetNumber = p.magnetNumber || "—";
+    card.innerHTML = `
+      <div>${thumb}</div>
+      <div class="product-main">
+        <div class="product-top">
+          <div class="product-code">${escapeHtml(p.barcode)}</div>
+          <div class="stock-pill">${Number(p.stock || 0)}</div>
+        </div>
+        <div class="product-meta">
+          <div class="meta-item"><span class="meta-label">Kategorie</span><span class="meta-value">${escapeHtml(category)}</span></div>
+          <div class="meta-item"><span class="meta-label">Maße</span><span class="meta-value">${escapeHtml(dimensions)}</span></div>
+          <div class="meta-item"><span class="meta-label">MagnetNr.</span><span class="meta-value">${escapeHtml(magnetNumber)}</span></div>
+        </div>
+        <div class="product-actions">
           <button class="secondary" data-edit="${escapeAttr(p.barcode)}" type="button">Bearbeiten</button>
           <button class="good" data-plus="${escapeAttr(p.barcode)}" type="button">+1</button>
           <button class="warn" data-minus="${escapeAttr(p.barcode)}" type="button">−1</button>
           <button class="secondary" data-qr="${escapeAttr(p.barcode)}" type="button">QR</button>
           <button class="bad" data-del="${escapeAttr(p.barcode)}" type="button">Löschen</button>
         </div>
-      </td>
+      </div>
     `;
-    tbody.appendChild(tr);
+    list.appendChild(card);
   }
 
-  tbody.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", async () => editProduct(await getProduct(btn.getAttribute("data-edit")))));
-  tbody.querySelectorAll("[data-plus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-plus"), 1)));
-  tbody.querySelectorAll("[data-minus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-minus"), -1)));
-  tbody.querySelectorAll("[data-qr]").forEach(btn => btn.addEventListener("click", async () => {
+  list.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", async () => editProduct(await getProduct(btn.getAttribute("data-edit")))));
+  list.querySelectorAll("[data-plus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-plus"), 1)));
+  list.querySelectorAll("[data-minus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-minus"), -1)));
+  list.querySelectorAll("[data-qr]").forEach(btn => btn.addEventListener("click", async () => {
     const p = await getProduct(btn.getAttribute("data-qr"));
     if (p) renderLabels([p]);
   }));
-  tbody.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", async () => {
+  list.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", async () => {
     const barcode = btn.getAttribute("data-del");
     if (confirm(`Artikel ${barcode} wirklich löschen?`)) {
       await deleteProduct(barcode);
@@ -1162,6 +1264,7 @@ function bindEvents() {
   $("focusScan").addEventListener("click", focusScanSoon);
   $("keyboardToggle").addEventListener("click", toggleKeyboardMode);
   $("toggleEditSection").addEventListener("click", () => toggleSection("edit"));
+  $("toggleListSection").addEventListener("click", () => toggleSection("list"));
   $("toggleLabelsSection").addEventListener("click", () => toggleSection("labels"));
   $("toggleBackupSection").addEventListener("click", () => toggleSection("backup"));
 
@@ -1231,7 +1334,7 @@ async function init() {
     loadSettings();
     loadSectionState();
     await refresh();
-    setStatus("Bereit. Version 3.4 ist aktiv. MagnetNummer ist verfügbar.", "ok");
+    setStatus("Bereit. Version 3.5 ist aktiv. Die Artikelliste ist handyfreundlich und einklappbar.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {

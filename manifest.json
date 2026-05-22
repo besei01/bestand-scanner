@@ -1,7 +1,7 @@
 {
   "name": "Bestand Scanner",
   "short_name": "Bestand",
-  "description": "Offline-Bestandsverwaltung v3.4 mit MagnetNummer",
+  "description": "Offline-Bestandsverwaltung v3.5 mit handyfreundlicher Artikelliste",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
