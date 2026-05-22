@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.11</title>
+  <title>Bestand Scanner v3.13</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -361,6 +361,20 @@
       font-weight: 800;
       margin-top: 8px;
     }
+    .scan-market-info {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 12px;
+      font-weight: 800;
+      margin: 0 0 10px;
+    }
+    .scan-market-info.active {
+      background: #ecfdf5;
+      color: #065f46;
+    }
     .sales-list {
       display: grid;
       gap: 8px;
@@ -556,7 +570,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.11: Verkauf · Märkte · Preis · Historie</p>
+    <p>Offline-Lagerverwaltung v3.13: Verkauf · Märkte · Preis · Historie</p>
   </header>
 
   <main>
@@ -573,6 +587,8 @@
         <button id="quickMode" class="secondary" type="button">Ausgang −</button>
         <button id="keyboardToggle" class="secondary" type="button">Tastatur an</button>
       </div>
+
+      <div id="scanMarketInfo" class="scan-market-info">Aktiver Markt: keiner</div>
 
       <div class="row">
         <div>
@@ -605,7 +621,7 @@
         <button id="toggleMarketSection" class="toggle-section" type="button">Ausblenden</button>
       </div>
       <div id="marketSectionBody" class="collapsible-body">
-      <p class="hint">Ein Verkauf wird nur in der Verkaufshistorie gespeichert, wenn ein aktiver Markt ausgewählt ist und Bestand reduziert wird.</p>
+      <p class="hint">Warenausgang / Verkauf ist nur möglich, wenn ein aktiver Markt ausgewählt ist. Ohne aktiven Markt wird kein Bestand reduziert.</p>
       <div class="row">
         <div>
           <label for="activeMarket">Aktiver Markt</label>
@@ -1108,14 +1124,8 @@ function getAllSales() {
 
 async function recordSaleIfNeeded(product, quantity, stockBefore, stockAfter) {
   if (!quantity || quantity <= 0) return null;
-  const marketId = getActiveMarketId();
-  if (!marketId) return null;
-  const markets = await getAllMarkets();
-  const market = markets.find(m => m.id === marketId);
-  if (!market) {
-    setActiveMarketId("");
-    return null;
-  }
+  const market = await getValidActiveMarket();
+  if (!market) return null;
   const unitPrice = parsePrice(product.price || 0);
   return await addSale({
     marketId: market.id,
@@ -1135,6 +1145,27 @@ function formatDateTime(iso) {
   } catch {
     return iso || "";
   }
+}
+
+async function getValidActiveMarket() {
+  const marketId = getActiveMarketId();
+  if (!marketId) return null;
+  const markets = await getAllMarkets();
+  const market = markets.find(m => m.id === marketId);
+  if (!market) {
+    setActiveMarketId("");
+    await refreshMarketsAndSales();
+    return null;
+  }
+  return market;
+}
+
+async function requireActiveMarketForStockReduction() {
+  const market = await getValidActiveMarket();
+  if (market) return market;
+  setStatus("Blockiert: Kein aktiver Markt ausgewählt.\nBitte zuerst unter „Markt / Verkauf“ einen Markt auswählen oder anlegen.", "bad");
+  openSection("market");
+  return null;
 }
 
 
@@ -1263,6 +1294,15 @@ async function processBarcode(raw) {
     $("scanInput").value = "";
     setTimeout(() => $("unknownStock").focus(), 100);
     return;
+  }
+
+  if (delta < 0) {
+    const market = await requireActiveMarketForStockReduction();
+    if (!market) {
+      $("scanInput").value = "";
+      focusScanSoon();
+      return;
+    }
   }
 
   const before = Number(product.stock || 0);
@@ -1396,6 +1436,7 @@ async function saveUnknownAndBook() {
 async function adjustStock(barcode, delta) {
   const product = await getProduct(barcode);
   if (!product) return;
+
   const before = Number(product.stock || 0);
   const after = before + delta;
   if (delta < 0 && $("preventNegative").checked && after < 0) {
@@ -1404,9 +1445,7 @@ async function adjustStock(barcode, delta) {
   }
   product.stock = after;
   await putProduct(product);
-  const sale = delta < 0 ? await recordSaleIfNeeded(product, -delta, before, after) : null;
-  const saleText = sale ? `\nVerkauf erfasst: ${sale.marketName} · ${formatMoney(sale.total)}` : "";
-  setStatus(`${barcode}\nBestand: ${before} → ${after}${saleText}`, "ok");
+  setStatus(`${barcode}\nBestandskorrektur: ${delta > 0 ? "+" : ""}${delta}\nBestand: ${before} → ${after}`, "ok");
   await refresh();
 }
 
@@ -1793,6 +1832,10 @@ async function refreshMarketsAndSales() {
   if ($("activeMarketInfo")) {
     $("activeMarketInfo").textContent = activeMarket ? `Aktiver Markt: ${activeMarket.name}` : "Aktiver Markt: keiner";
   }
+  if ($("scanMarketInfo")) {
+    $("scanMarketInfo").textContent = activeMarket ? `Aktiver Markt: ${activeMarket.name}` : "Aktiver Markt: keiner";
+    $("scanMarketInfo").classList.toggle("active", !!activeMarket);
+  }
 
   const list = $("marketList");
   if (list) {
@@ -2105,7 +2148,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.11 ist aktiv. Löschen ist zusätzlich abgesichert.", "ok");
+    setStatus("Bereit. Version 3.13 ist aktiv. Aktiver Markt wird im Scanbereich angezeigt.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {

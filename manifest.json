@@ -1,7 +1,7 @@
 {
   "name": "Bestand Scanner",
   "short_name": "Bestand",
-  "description": "Offline-Bestandsverwaltung v3.11 mit abgesichertem Löschen",
+  "description": "Offline-Bestandsverwaltung v3.13 mit Marktanzeige im Scanbereich",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
