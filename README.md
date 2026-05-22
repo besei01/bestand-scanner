@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.7
+# Bestand Scanner PWA v3.8
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -87,3 +87,13 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Die Bestandsübersicht enthält jetzt eine Bildspalte.
 - Bilder werden in der Druckansicht und im PDF klein mit ausgegeben.
 - Das Drucklayout bleibt kompakt und papiersparend.
+
+
+## Neu in Version 3.8
+
+- Neues Feld `Preis`
+- Märkte können angelegt, ausgewählt und auf `Kein aktiver Markt` gesetzt werden
+- Bei aktivem Markt wird jeder Warenausgang als Verkauf gespeichert
+- Verkaufshistorie enthält Zeit, Markt, Artikelnummer, Menge, Einzelpreis, Summe und Bestand vor/nach Verkauf
+- Verkaufshistorie kann als CSV exportiert werden
+- Vollbackup enthält Artikel, Bilder, Märkte und Verkaufshistorie

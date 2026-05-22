@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.7</title>
+  <title>Bestand Scanner v3.8</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -217,7 +217,7 @@
     }
     .product-meta {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 6px;
       margin-top: 8px;
     }
@@ -318,6 +318,59 @@
       font-size: 9px;
       background: #f9fafb;
     }
+    .market-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .market-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #f9fafb;
+    }
+    .market-row button {
+      width: auto;
+      min-width: 88px;
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    .active-market-pill {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: #eef2ff;
+      color: #312e81;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+    .sales-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .sale-row {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 8px 10px;
+      background: #fff;
+      font-size: 13px;
+    }
+    .sale-main {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 800;
+    }
+    .sale-meta {
+      color: var(--muted);
+      margin-top: 3px;
+    }
     .print-report {
       display: none;
     }
@@ -394,6 +447,12 @@
       .report-controls {
         grid-template-columns: 1fr;
       }
+      .market-row {
+        grid-template-columns: 1fr;
+      }
+      .market-row button {
+        width: 100%;
+      }
       .product-code {
         font-size: 15px;
       }
@@ -468,7 +527,12 @@
       }
       .print-table td.magnet,
       .print-table th.magnet {
-        width: 22mm;
+        width: 20mm;
+      }
+      .print-table td.price,
+      .print-table th.price {
+        text-align: right;
+        width: 18mm;
       }
       .print-table td.dim,
       .print-table th.dim {
@@ -484,7 +548,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.7: Barcode · Bestand · Bild · Kategorie · Maße · MagnetNummer</p>
+    <p>Offline-Lagerverwaltung v3.8: Verkauf · Märkte · Preis · Historie</p>
   </header>
 
   <main>
@@ -521,13 +585,46 @@
       <div id="scanStatus" class="status">Bereit. Daten werden lokal auf diesem Gerät gespeichert.</div>
     </section>
 
+    <section class="card" id="marketCard">
+      <h2>Markt / Verkauf</h2>
+      <p class="hint">Ein Verkauf wird nur in der Verkaufshistorie gespeichert, wenn ein aktiver Markt ausgewählt ist und Bestand reduziert wird.</p>
+      <div class="row">
+        <div>
+          <label for="activeMarket">Aktiver Markt</label>
+          <select id="activeMarket">
+            <option value="">Kein aktiver Markt</option>
+          </select>
+        </div>
+        <div>
+          <label for="newMarketName">Neuen Markt anlegen</label>
+          <input id="newMarketName" autocomplete="off" placeholder="z. B. Wochenmarkt Köln">
+        </div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button id="addMarket" class="good" type="button">Markt hinzufügen</button>
+        <button id="clearActiveMarket" class="secondary" type="button">Kein aktiver Markt</button>
+      </div>
+      <div id="activeMarketInfo" class="active-market-pill">Aktiver Markt: keiner</div>
+      <div id="marketList" class="market-list"></div>
+      <h3 style="font-size:15px;margin:14px 0 6px">Letzte Verkäufe</h3>
+      <div id="recentSales" class="sales-list"></div>
+    </section>
+
     <section id="unknownCard" class="card hidden">
       <h2>Unbekannten Artikel anlegen</h2>
       <p class="hint">Dieser Code ist noch nicht bekannt. Lege den Artikel an, danach wird der Scan gebucht.</p>
       <label for="unknownBarcode">Artikelnummer / Barcode</label>
       <input id="unknownBarcode" autocomplete="off">
-      <label for="unknownStock">Startbestand</label>
-      <input id="unknownStock" type="number" step="1" value="0">
+      <div class="row">
+        <div>
+          <label for="unknownStock">Startbestand</label>
+          <input id="unknownStock" type="number" step="1" value="0">
+        </div>
+        <div>
+          <label for="unknownPrice">Preis</label>
+          <input id="unknownPrice" type="text" inputmode="decimal" value="0,00" placeholder="z. B. 4,50">
+        </div>
+      </div>
       <div class="row3">
         <div>
           <label for="unknownCategory">Kategorie</label>
@@ -556,7 +653,7 @@
         <button id="toggleEditSection" class="toggle-section" type="button">Ausblenden</button>
       </div>
       <div id="editSectionBody" class="collapsible-body">
-      <div class="row">
+      <div class="row3">
         <div>
           <label for="barcode">Artikelnummer / Barcode</label>
           <input id="barcode" autocomplete="off" placeholder="z. B. ART-000123">
@@ -564,6 +661,10 @@
         <div>
           <label for="stock">Bestand</label>
           <input id="stock" type="number" step="1" value="0">
+        </div>
+        <div>
+          <label for="price">Preis</label>
+          <input id="price" type="text" inputmode="decimal" value="0,00" placeholder="z. B. 4,50">
         </div>
       </div>
       <div class="row3">
@@ -603,7 +704,7 @@
         <div class="row">
           <div>
             <label for="search">Suche</label>
-            <input id="search" autocomplete="off" placeholder="Artikelnummer, Kategorie, Maße oder MagnetNummer …">
+            <input id="search" autocomplete="off" placeholder="Artikelnummer, Kategorie, Maße, MagnetNummer oder Preis …">
           </div>
           <div>
             <label for="sortBy">Sortieren nach</label>
@@ -616,6 +717,8 @@
               <option value="category-desc">Kategorie absteigend</option>
               <option value="magnet-asc">MagnetNummer aufsteigend</option>
               <option value="magnet-desc">MagnetNummer absteigend</option>
+              <option value="price-asc">Preis aufsteigend</option>
+              <option value="price-desc">Preis absteigend</option>
             </select>
           </div>
         </div>
@@ -640,7 +743,7 @@
           </div>
           <div>
             <label for="reportSearch">Zusatzfilter</label>
-            <input id="reportSearch" autocomplete="off" placeholder="Artikelnummer, Maße, MagnetNummer …">
+            <input id="reportSearch" autocomplete="off" placeholder="Artikelnummer, Maße, MagnetNummer, Preis …">
           </div>
         </div>
         <div class="report-controls">
@@ -653,6 +756,8 @@
               <option value="stock-desc">Bestand absteigend</option>
               <option value="magnet-asc">MagnetNummer aufsteigend</option>
               <option value="magnet-desc">MagnetNummer absteigend</option>
+              <option value="price-asc">Preis aufsteigend</option>
+              <option value="price-desc">Preis absteigend</option>
             </select>
           </div>
           <div>
@@ -678,7 +783,7 @@
         <button id="toggleBackupSection" class="toggle-section" type="button">Ausblenden</button>
       </div>
       <div id="backupSectionBody" class="collapsible-body">
-      <p class="hint">CSV enthält Artikelnummer, Bestand, Kategorie, Maße und MagnetNummer. Das Vollbackup enthält zusätzlich die Bilder.</p>
+      <p class="hint">CSV enthält Artikelnummer, Bestand, Kategorie, Maße, MagnetNummer und Preis. Das Vollbackup enthält zusätzlich Bilder, Märkte und Verkaufshistorie.</p>
       <div class="actions">
         <button id="exportCsv" type="button">CSV exportieren</button>
         <button id="importCsvBtn" class="secondary" type="button">CSV importieren</button>
@@ -686,6 +791,9 @@
       <div class="actions" style="margin-top:10px">
         <button id="exportFull" class="good" type="button">Vollbackup mit Bildern exportieren</button>
         <button id="importFullBtn" class="secondary" type="button">Vollbackup wiederherstellen</button>
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button id="exportSales" type="button">Verkaufshistorie exportieren</button>
       </div>
       <input id="importCsvFile" class="hidden" type="file" accept=".csv,text/csv,text/plain">
       <input id="importFullFile" class="hidden" type="file" accept=".json,application/json">
@@ -709,7 +817,7 @@
 <script src="qrcode.bundle.js"></script>
 <script>
 const DB_NAME = "bestand-scanner-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 let db;
 let mode = "out";
 let lastScanBarcode = "";
@@ -789,6 +897,15 @@ function openDb() {
       if (!database.objectStoreNames.contains("history")) {
         database.createObjectStore("history", { keyPath: "id", autoIncrement: true });
       }
+      if (!database.objectStoreNames.contains("markets")) {
+        database.createObjectStore("markets", { keyPath: "id" });
+      }
+      if (!database.objectStoreNames.contains("sales")) {
+        const sales = database.createObjectStore("sales", { keyPath: "id", autoIncrement: true });
+        sales.createIndex("ts", "ts", { unique: false });
+        sales.createIndex("marketId", "marketId", { unique: false });
+        sales.createIndex("barcode", "barcode", { unique: false });
+      }
     };
     req.onsuccess = () => { db = req.result; resolve(db); };
     req.onerror = () => reject(req.error);
@@ -813,6 +930,7 @@ function putProduct(product) {
     const clean = {
       barcode: String(product.barcode || "").trim(),
       stock: Number(product.stock || 0),
+      price: parsePrice(product.price ?? product.preis ?? 0),
       category: String(product.category || product.kategorie || "").trim(),
       dimensions: String(product.dimensions || product.maße || product.masse || product.size || "").trim(),
       magnetNumber: String(product.magnetNumber || product.magnetnummer || product.magnetNummer || product.magnet_no || product.magnetNo || "").trim(),
@@ -841,6 +959,7 @@ function getAllProducts() {
       const rows = (req.result || []).map(p => ({
         barcode: String(p.barcode || "").trim(),
         stock: Number(p.stock || 0),
+        price: parsePrice(p.price ?? p.preis ?? 0),
         category: String(p.category || p.kategorie || "").trim(),
         dimensions: String(p.dimensions || p.maße || p.masse || p.size || "").trim(),
         magnetNumber: String(p.magnetNumber || p.magnetnummer || p.magnetNummer || p.magnet_no || p.magnetNo || "").trim(),
@@ -854,13 +973,158 @@ function getAllProducts() {
   });
 }
 
-function clearAllProducts() {
+
+function clearStore(storeName) {
   return new Promise((resolve, reject) => {
-    const req = tx("products", "readwrite").clear();
+    const req = tx(storeName, "readwrite").clear();
     req.onsuccess = () => resolve();
     req.onerror = () => reject(req.error);
   });
 }
+
+function clearAllProducts() {
+  return clearStore("products");
+}
+
+function getAllMarkets() {
+  return new Promise((resolve, reject) => {
+    const req = tx("markets").getAll();
+    req.onsuccess = () => {
+      const rows = (req.result || [])
+        .map(m => ({ id: String(m.id || "").trim(), name: String(m.name || "").trim(), createdAt: m.createdAt || "" }))
+        .filter(m => m.id && m.name)
+        .sort((a,b) => a.name.localeCompare(b.name, "de", { numeric: true }));
+      resolve(rows);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function putMarket(market) {
+  return new Promise((resolve, reject) => {
+    const now = new Date().toISOString();
+    const clean = {
+      id: String(market.id || ("mkt-" + Date.now() + "-" + Math.random().toString(36).slice(2))).trim(),
+      name: String(market.name || "").trim(),
+      createdAt: market.createdAt || now,
+      updatedAt: now
+    };
+    if (!clean.name) return reject(new Error("Marktname fehlt."));
+    const req = tx("markets", "readwrite").put(clean);
+    req.onsuccess = () => resolve(clean);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function deleteMarket(id) {
+  return new Promise((resolve, reject) => {
+    const req = tx("markets", "readwrite").delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+const ACTIVE_MARKET_KEY = "bestand-scanner-active-market-v38";
+
+function getActiveMarketId() {
+  return localStorage.getItem(ACTIVE_MARKET_KEY) || "";
+}
+
+function setActiveMarketId(id) {
+  if (id) localStorage.setItem(ACTIVE_MARKET_KEY, id);
+  else localStorage.removeItem(ACTIVE_MARKET_KEY);
+}
+
+function putSale(sale) {
+  return new Promise((resolve, reject) => {
+    const clean = {
+      ...sale,
+      ts: sale.ts || new Date().toISOString(),
+      marketId: String(sale.marketId || ""),
+      marketName: String(sale.marketName || ""),
+      barcode: String(sale.barcode || ""),
+      quantity: Number(sale.quantity || 0),
+      unitPrice: parsePrice(sale.unitPrice ?? sale.price ?? 0),
+      total: parsePrice(sale.total ?? (Number(sale.quantity || 0) * parsePrice(sale.unitPrice ?? sale.price ?? 0))),
+      stockBefore: Number(sale.stockBefore ?? sale.before ?? 0),
+      stockAfter: Number(sale.stockAfter ?? sale.after ?? 0)
+    };
+    const req = tx("sales", "readwrite").put(clean);
+    req.onsuccess = () => resolve(clean);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function addSale(sale) {
+  return new Promise((resolve, reject) => {
+    const clean = {
+      ...sale,
+      ts: sale.ts || new Date().toISOString(),
+      quantity: Number(sale.quantity || 0),
+      unitPrice: parsePrice(sale.unitPrice ?? sale.price ?? 0),
+      total: parsePrice(sale.total ?? (Number(sale.quantity || 0) * parsePrice(sale.unitPrice ?? sale.price ?? 0)))
+    };
+    delete clean.id;
+    const req = tx("sales", "readwrite").add(clean);
+    req.onsuccess = () => resolve({ ...clean, id: req.result });
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getAllSales() {
+  return new Promise((resolve, reject) => {
+    const req = tx("sales").getAll();
+    req.onsuccess = () => {
+      const rows = (req.result || []).map(s => ({
+        id: s.id,
+        ts: s.ts || "",
+        marketId: s.marketId || "",
+        marketName: s.marketName || "",
+        barcode: s.barcode || "",
+        quantity: Number(s.quantity || 0),
+        unitPrice: parsePrice(s.unitPrice ?? s.price ?? 0),
+        total: parsePrice(s.total ?? 0),
+        stockBefore: Number(s.stockBefore ?? s.before ?? 0),
+        stockAfter: Number(s.stockAfter ?? s.after ?? 0)
+      }));
+      rows.sort((a,b) => (b.ts || "").localeCompare(a.ts || ""));
+      resolve(rows);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function recordSaleIfNeeded(product, quantity, stockBefore, stockAfter) {
+  if (!quantity || quantity <= 0) return null;
+  const marketId = getActiveMarketId();
+  if (!marketId) return null;
+  const markets = await getAllMarkets();
+  const market = markets.find(m => m.id === marketId);
+  if (!market) {
+    setActiveMarketId("");
+    return null;
+  }
+  const unitPrice = parsePrice(product.price || 0);
+  return await addSale({
+    marketId: market.id,
+    marketName: market.name,
+    barcode: product.barcode,
+    quantity,
+    unitPrice,
+    total: quantity * unitPrice,
+    stockBefore,
+    stockAfter
+  });
+}
+
+function formatDateTime(iso) {
+  try {
+    return new Date(iso).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return iso || "";
+  }
+}
+
 
 function setStatus(message, type = "") {
   const el = $("scanStatus");
@@ -891,6 +1155,21 @@ function cleanBarcode(value) {
 function intVal(id, fallback = 0) {
   const n = parseInt($(id).value, 10);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function parsePrice(value) {
+  if (value === undefined || value === null) return 0;
+  const s = String(value).trim().replace(/\s/g, "").replace(",", ".");
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : 0;
+}
+
+function formatPrice(value) {
+  return Number(value || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatMoney(value) {
+  return formatPrice(value) + " €";
 }
 
 function loadSettings() {
@@ -964,8 +1243,10 @@ async function processBarcode(raw) {
     $("unknownCard").classList.remove("hidden");
     $("unknownBarcode").value = barcode;
     $("unknownStock").value = "0";
+    $("unknownPrice").value = "0,00";
     $("unknownCategory").value = "";
     $("unknownDimensions").value = "";
+    $("unknownMagnetNumber").value = "";
     setStatus("Unbekannter Code: " + barcode + "\nBitte Artikel anlegen.", "warn");
     $("scanInput").value = "";
     setTimeout(() => $("unknownStock").focus(), 100);
@@ -985,8 +1266,10 @@ async function processBarcode(raw) {
 
   product.stock = after;
   await putProduct(product);
+  const sale = delta < 0 ? await recordSaleIfNeeded(product, -delta, before, after) : null;
+  const saleText = sale ? `\nVerkauf erfasst: ${sale.marketName} · ${formatMoney(sale.total)}` : "";
 
-  setStatus(`${barcode}\n${mode === "out" ? "Warenausgang" : "Wareneingang"}: ${delta > 0 ? "+" : ""}${delta}\nBestand: ${before} → ${after}`, "ok");
+  setStatus(`${barcode}\n${mode === "out" ? "Warenausgang" : "Wareneingang"}: ${delta > 0 ? "+" : ""}${delta}\nBestand: ${before} → ${after}${saleText}`, "ok");
   $("scanInput").value = "";
   await refresh();
   focusScanSoon();
@@ -1040,6 +1323,7 @@ async function saveProductFromForm() {
     ...(old || {}),
     barcode,
     stock: intVal("stock", 0),
+    price: parsePrice($("price").value),
     category: $("category").value.trim(),
     dimensions: $("dimensions").value.trim(),
     magnetNumber: $("magnetNumber").value.trim(),
@@ -1054,6 +1338,7 @@ async function saveProductFromForm() {
 function clearProductForm() {
   $("barcode").value = "";
   $("stock").value = "0";
+  $("price").value = "0,00";
   $("category").value = "";
   $("dimensions").value = "";
   $("magnetNumber").value = "";
@@ -1065,6 +1350,7 @@ function editProduct(product) {
   openEditSection();
   $("barcode").value = product.barcode || "";
   $("stock").value = product.stock ?? 0;
+  $("price").value = formatPrice(product.price || 0);
   $("category").value = product.category || "";
   $("dimensions").value = product.dimensions || "";
   $("magnetNumber").value = product.magnetNumber || "";
@@ -1082,6 +1368,7 @@ async function saveUnknownAndBook() {
   await putProduct({
     barcode,
     stock: intVal("unknownStock", 0),
+    price: parsePrice($("unknownPrice").value),
     category: $("unknownCategory").value.trim(),
     dimensions: $("unknownDimensions").value.trim(),
     magnetNumber: $("unknownMagnetNumber").value.trim(),
@@ -1105,7 +1392,9 @@ async function adjustStock(barcode, delta) {
   }
   product.stock = after;
   await putProduct(product);
-  setStatus(`${barcode}\nBestand: ${before} → ${after}`, "ok");
+  const sale = delta < 0 ? await recordSaleIfNeeded(product, -delta, before, after) : null;
+  const saleText = sale ? `\nVerkauf erfasst: ${sale.marketName} · ${formatMoney(sale.total)}` : "";
+  setStatus(`${barcode}\nBestand: ${before} → ${after}${saleText}`, "ok");
   await refresh();
 }
 
@@ -1113,7 +1402,7 @@ async function refresh() {
   const products = await getAllProducts();
   const query = $("search").value.trim().toLowerCase();
   const filtered = products.filter(p => {
-    const haystack = `${p.barcode} ${p.category || ""} ${p.dimensions || ""} ${p.magnetNumber || ""}`.toLowerCase();
+    const haystack = `${p.barcode} ${p.category || ""} ${p.dimensions || ""} ${p.magnetNumber || ""} ${formatPrice(p.price || 0)}`.toLowerCase();
     return !query || haystack.includes(query);
   });
 
@@ -1125,6 +1414,8 @@ async function refresh() {
     if (sortBy === "category-desc") return (b.category || "").localeCompare(a.category || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
     if (sortBy === "magnet-asc") return (a.magnetNumber || "").localeCompare(b.magnetNumber || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
     if (sortBy === "magnet-desc") return (b.magnetNumber || "").localeCompare(a.magnetNumber || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "price-asc") return Number(a.price || 0) - Number(b.price || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "price-desc") return Number(b.price || 0) - Number(a.price || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
     if (sortBy === "barcode-desc") return b.barcode.localeCompare(a.barcode, "de", { numeric: true });
     return a.barcode.localeCompare(b.barcode, "de", { numeric: true });
   });
@@ -1133,7 +1424,8 @@ async function refresh() {
   const withImages = products.filter(p => !!p.image).length;
   const categories = new Set(products.map(p => p.category).filter(Boolean)).size;
   const withMagnetNumbers = products.filter(p => !!p.magnetNumber).length;
-  $("summary").textContent = `${products.length} Artikel · Gesamtbestand ${totalStock} · ${categories} Kategorien · ${withImages} mit Bild · ${withMagnetNumbers} mit MagnetNummer`;
+  const totalValue = products.reduce((sum, p) => sum + Number(p.stock || 0) * Number(p.price || 0), 0);
+  $("summary").textContent = `${products.length} Artikel · Gesamtbestand ${totalStock} · Warenwert ${formatMoney(totalValue)} · ${categories} Kategorien · ${withImages} mit Bild · ${withMagnetNumbers} mit MagnetNummer`;
 
   const list = $("productRows");
   list.innerHTML = "";
@@ -1144,6 +1436,7 @@ async function refresh() {
     const category = p.category || "—";
     const dimensions = p.dimensions || "—";
     const magnetNumber = p.magnetNumber || "—";
+    const price = formatMoney(p.price || 0);
     card.innerHTML = `
       <div>${thumb}</div>
       <div class="product-main">
@@ -1155,6 +1448,7 @@ async function refresh() {
           <div class="meta-item"><span class="meta-label">Kategorie</span><span class="meta-value">${escapeHtml(category)}</span></div>
           <div class="meta-item"><span class="meta-label">Maße</span><span class="meta-value">${escapeHtml(dimensions)}</span></div>
           <div class="meta-item"><span class="meta-label">MagnetNr.</span><span class="meta-value">${escapeHtml(magnetNumber)}</span></div>
+          <div class="meta-item"><span class="meta-label">Preis</span><span class="meta-value">${escapeHtml(price)}</span></div>
         </div>
         <div class="product-actions">
           <button class="secondary" data-edit="${escapeAttr(p.barcode)}" type="button">Bearbeiten</button>
@@ -1173,6 +1467,7 @@ async function refresh() {
 
   await updateReportCategoryOptions(products);
   if ($("reportPreview")) updateReportPreview();
+  await refreshMarketsAndSales();
 
   list.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", async () => {
     const barcode = btn.getAttribute("data-del");
@@ -1209,9 +1504,9 @@ function downloadText(filename, text, type = "text/plain;charset=utf-8") {
 
 async function exportCsv() {
   const products = await getAllProducts();
-  const lines = ["barcode;bestand;kategorie;masse;magnetnummer"];
+  const lines = ["barcode;bestand;kategorie;masse;magnetnummer;preis"];
   for (const p of products) {
-    lines.push([p.barcode, p.stock, p.category || "", p.dimensions || "", p.magnetNumber || ""].map(csvEscape).join(";"));
+    lines.push([p.barcode, p.stock, p.category || "", p.dimensions || "", p.magnetNumber || "", formatPrice(p.price || 0)].map(csvEscape).join(";"));
   }
   downloadText("bestand-v3.csv", lines.join("\n"), "text/csv;charset=utf-8");
 }
@@ -1258,6 +1553,8 @@ async function importCsv(file) {
   let magnetNumberI = hasHeader ? header.indexOf("magnetnummer") : 4;
   if (magnetNumberI < 0) magnetNumberI = hasHeader ? header.indexOf("magnetnumber") : 4;
   if (magnetNumberI < 0) magnetNumberI = hasHeader ? header.indexOf("magnet_nummer") : 4;
+  let priceI = hasHeader ? header.indexOf("preis") : 5;
+  if (priceI < 0) priceI = hasHeader ? header.indexOf("price") : 5;
 
   let count = 0;
   for (const r of dataRows) {
@@ -1271,6 +1568,7 @@ async function importCsv(file) {
       category: (r[categoryI >= 0 ? categoryI : 2] || old?.category || "").trim(),
       dimensions: (r[dimensionsI >= 0 ? dimensionsI : 3] || old?.dimensions || "").trim(),
       magnetNumber: (r[magnetNumberI >= 0 ? magnetNumberI : 4] || old?.magnetNumber || "").trim(),
+      price: parsePrice(r[priceI >= 0 ? priceI : 5] ?? old?.price ?? 0),
       image: old?.image || ""
     });
     count++;
@@ -1281,13 +1579,18 @@ async function importCsv(file) {
 
 async function exportFullBackup() {
   const products = await getAllProducts();
+  const markets = await getAllMarkets();
+  const sales = await getAllSales();
   const backup = {
     app: "bestand-scanner",
-    version: 3.4,
+    version: 3.8,
     exportedAt: new Date().toISOString(),
-    products
+    activeMarketId: getActiveMarketId(),
+    products,
+    markets,
+    sales
   };
-  downloadText("bestand-vollbackup-mit-bildern.json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
+  downloadText("bestand-vollbackup-mit-bildern-maerkten-verkaeufen.json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
 }
 
 async function importFullBackup(file) {
@@ -1300,7 +1603,11 @@ async function importFullBackup(file) {
   if (!Array.isArray(products)) return alert("Kein gültiges Produkt-Backup gefunden.");
 
   const replace = confirm("Soll die aktuelle Artikelliste vor dem Import gelöscht werden?\nOK = ersetzen, Abbrechen = nur hinzufügen/aktualisieren");
-  if (replace) await clearAllProducts();
+  if (replace) {
+    await clearStore("products");
+    if (db.objectStoreNames.contains("markets")) await clearStore("markets");
+    if (db.objectStoreNames.contains("sales")) await clearStore("sales");
+  }
 
   let count = 0;
   for (const p of products) {
@@ -1312,11 +1619,28 @@ async function importFullBackup(file) {
       category: p.category || p.kategorie || "",
       dimensions: p.dimensions || p.maße || p.masse || p.size || "",
       magnetNumber: p.magnetNumber || p.magnetnummer || p.magnetNummer || p.magnet_no || p.magnetNo || "",
+      price: parsePrice(p.price ?? p.preis ?? 0),
       image: p.image || ""
     });
     count++;
   }
-  setStatus(`${count} Artikel aus Vollbackup wiederhergestellt.`, "ok");
+  let marketCount = 0;
+  if (Array.isArray(data.markets)) {
+    for (const m of data.markets) {
+      if (!m.name) continue;
+      await putMarket({ id: m.id, name: m.name, createdAt: m.createdAt });
+      marketCount++;
+    }
+  }
+  let salesCount = 0;
+  if (Array.isArray(data.sales)) {
+    for (const s of data.sales) {
+      await putSale(s);
+      salesCount++;
+    }
+  }
+  if (data.activeMarketId) setActiveMarketId(data.activeMarketId);
+  setStatus(`${count} Artikel, ${marketCount} Märkte und ${salesCount} Verkäufe aus Vollbackup wiederhergestellt.`, "ok");
   await refresh();
 }
 
@@ -1403,6 +1727,106 @@ function drawQrCode(canvas, text) {
 }
 
 
+
+async function refreshMarketsAndSales() {
+  const markets = await getAllMarkets();
+  let activeId = getActiveMarketId();
+  if (activeId && !markets.some(m => m.id === activeId)) {
+    activeId = "";
+    setActiveMarketId("");
+  }
+
+  const select = $("activeMarket");
+  if (select) {
+    select.innerHTML = `<option value="">Kein aktiver Markt</option>`;
+    for (const market of markets) {
+      const opt = document.createElement("option");
+      opt.value = market.id;
+      opt.textContent = market.name;
+      select.appendChild(opt);
+    }
+    select.value = activeId;
+  }
+
+  const activeMarket = markets.find(m => m.id === activeId);
+  if ($("activeMarketInfo")) {
+    $("activeMarketInfo").textContent = activeMarket ? `Aktiver Markt: ${activeMarket.name}` : "Aktiver Markt: keiner";
+  }
+
+  const list = $("marketList");
+  if (list) {
+    list.innerHTML = "";
+    for (const market of markets) {
+      const row = document.createElement("div");
+      row.className = "market-row";
+      row.innerHTML = `
+        <div><strong>${escapeHtml(market.name)}</strong>${market.id === activeId ? ` <span class="small">aktiv</span>` : ""}</div>
+        <button class="bad" data-delete-market="${escapeAttr(market.id)}" type="button">Löschen</button>
+      `;
+      list.appendChild(row);
+    }
+    list.querySelectorAll("[data-delete-market]").forEach(btn => btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-delete-market");
+      const market = markets.find(m => m.id === id);
+      if (!confirm(`Markt "${market?.name || id}" löschen? Verkaufshistorie bleibt erhalten.`)) return;
+      await deleteMarket(id);
+      if (getActiveMarketId() === id) setActiveMarketId("");
+      await refreshMarketsAndSales();
+    }));
+  }
+
+  const recent = $("recentSales");
+  if (recent) {
+    const sales = (await getAllSales()).slice(0, 12);
+    recent.innerHTML = "";
+    if (!sales.length) {
+      recent.innerHTML = `<div class="hint">Noch keine Verkäufe gespeichert.</div>`;
+    } else {
+      for (const s of sales) {
+        const row = document.createElement("div");
+        row.className = "sale-row";
+        row.innerHTML = `
+          <div class="sale-main"><span>${escapeHtml(s.barcode)}</span><span>${formatMoney(s.total)}</span></div>
+          <div class="sale-meta">${escapeHtml(formatDateTime(s.ts))} · ${escapeHtml(s.marketName)} · Menge ${s.quantity} · Einzelpreis ${formatMoney(s.unitPrice)}</div>
+        `;
+        recent.appendChild(row);
+      }
+    }
+  }
+}
+
+async function addMarketFromForm() {
+  const name = $("newMarketName").value.trim();
+  if (!name) {
+    alert("Bitte Marktname eingeben.");
+    return;
+  }
+  const market = await putMarket({ name });
+  $("newMarketName").value = "";
+  setActiveMarketId(market.id);
+  await refreshMarketsAndSales();
+  setStatus("Markt angelegt und aktiviert: " + market.name, "ok");
+}
+
+async function exportSalesCsv() {
+  const sales = await getAllSales();
+  const lines = ["zeit;markt;artikelnummer;menge;einzelpreis;summe;bestand_vorher;bestand_nachher"];
+  for (const s of [...sales].reverse()) {
+    lines.push([
+      s.ts,
+      s.marketName,
+      s.barcode,
+      s.quantity,
+      formatPrice(s.unitPrice),
+      formatPrice(s.total),
+      s.stockBefore,
+      s.stockAfter
+    ].map(csvEscape).join(";"));
+  }
+  downloadText("verkaufshistorie.csv", lines.join("\n"), "text/csv;charset=utf-8");
+}
+
+
 function sortProductsForReport(rows, sortBy) {
   const copy = [...rows];
   copy.sort((a,b) => {
@@ -1410,6 +1834,8 @@ function sortProductsForReport(rows, sortBy) {
     if (sortBy === "stock-desc") return Number(b.stock || 0) - Number(a.stock || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
     if (sortBy === "magnet-asc") return (a.magnetNumber || "").localeCompare(b.magnetNumber || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
     if (sortBy === "magnet-desc") return (b.magnetNumber || "").localeCompare(a.magnetNumber || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "price-asc") return Number(a.price || 0) - Number(b.price || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
+    if (sortBy === "price-desc") return Number(b.price || 0) - Number(a.price || 0) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
     if (sortBy === "barcode-asc") return a.barcode.localeCompare(b.barcode, "de", { numeric: true });
     return (a.category || "").localeCompare(b.category || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
   });
@@ -1449,7 +1875,7 @@ async function getFilteredReportRows() {
     if (zeroMode === "nonzero" && Number(p.stock || 0) === 0) return false;
 
     if (query) {
-      const haystack = `${p.barcode} ${p.category || ""} ${p.dimensions || ""} ${p.magnetNumber || ""}`.toLowerCase();
+      const haystack = `${p.barcode} ${p.category || ""} ${p.dimensions || ""} ${p.magnetNumber || ""} ${formatPrice(p.price || 0)}`.toLowerCase();
       if (!haystack.includes(query)) return false;
     }
     return true;
@@ -1461,6 +1887,7 @@ async function getFilteredReportRows() {
 
 function buildReportTable(rows, forPrint = false) {
   const totalStock = rows.reduce((sum, p) => sum + Number(p.stock || 0), 0);
+  const totalValue = rows.reduce((sum, p) => sum + Number(p.stock || 0) * Number(p.price || 0), 0);
   const generated = new Date().toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
   const category = $("reportCategory")?.value || "Alle Kategorien";
   const query = $("reportSearch")?.value.trim() || "—";
@@ -1483,6 +1910,7 @@ function buildReportTable(rows, forPrint = false) {
       <td>${escapeHtml(p.category || "")}</td>
       <td class="dim">${escapeHtml(p.dimensions || "")}</td>
       <td class="magnet">${escapeHtml(p.magnetNumber || "")}</td>
+      <td class="price">${formatMoney(p.price || 0)}</td>
       <td class="stock">${Number(p.stock || 0)}</td>
     </tr>
   `).join("");
@@ -1502,17 +1930,18 @@ function buildReportTable(rows, forPrint = false) {
             <th>Kategorie</th>
             <th class="dim">Maße</th>
             <th class="magnet">MagnetNr.</th>
+            <th class="price">Preis</th>
             <th class="stock">Bestand</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>
       </table>
-      <div class="print-summary">${rows.length} Artikel · Gesamtbestand ${totalStock}</div>
+      <div class="print-summary">${rows.length} Artikel · Gesamtbestand ${totalStock} · Warenwert ${formatMoney(totalValue)}</div>
     `;
   }
 
   return `
-    <div class="report-title">Vorschau: ${rows.length} Artikel · Gesamtbestand ${totalStock}</div>
+    <div class="report-title">Vorschau: ${rows.length} Artikel · Gesamtbestand ${totalStock} · Warenwert ${formatMoney(totalValue)}</div>
     <table class="report-table">
       <thead>
         <tr>
@@ -1522,10 +1951,11 @@ function buildReportTable(rows, forPrint = false) {
           <th>Kategorie</th>
           <th>Maße</th>
           <th>MagnetNr.</th>
+          <th>Preis</th>
           <th>Bestand</th>
         </tr>
       </thead>
-      <tbody>${rowsHtml || `<tr><td colspan="7">Keine Artikel für diesen Filter.</td></tr>`}</tbody>
+      <tbody>${rowsHtml || `<tr><td colspan="8">Keine Artikel für diesen Filter.</td></tr>`}</tbody>
     </table>
     <div class="report-summary">Kategorie: ${escapeHtml(category)} · Filter: ${escapeHtml(query)} · ${escapeHtml(zeroText)}</div>
   `;
@@ -1550,6 +1980,10 @@ function bindEvents() {
   $("quickMode").addEventListener("click", () => setMode(mode === "out" ? "in" : "out"));
   $("focusScan").addEventListener("click", focusScanSoon);
   $("keyboardToggle").addEventListener("click", toggleKeyboardMode);
+  $("addMarket").addEventListener("click", addMarketFromForm);
+  $("clearActiveMarket").addEventListener("click", async () => { setActiveMarketId(""); await refreshMarketsAndSales(); });
+  $("activeMarket").addEventListener("change", async (e) => { setActiveMarketId(e.target.value); await refreshMarketsAndSales(); });
+  $("newMarketName").addEventListener("keydown", async (e) => { if (e.key === "Enter") { e.preventDefault(); await addMarketFromForm(); } });
   $("toggleEditSection").addEventListener("click", () => toggleSection("edit"));
   $("toggleListSection").addEventListener("click", () => toggleSection("list"));
   $("toggleReportSection").addEventListener("click", () => toggleSection("report"));
@@ -1594,6 +2028,7 @@ function bindEvents() {
   });
 
   $("exportCsv").addEventListener("click", exportCsv);
+  $("exportSales").addEventListener("click", exportSalesCsv);
   $("importCsvBtn").addEventListener("click", () => $("importCsvFile").click());
   $("importCsvFile").addEventListener("change", async (e) => {
     const file = e.target.files[0];
@@ -1625,7 +2060,8 @@ async function init() {
     loadSectionState();
     await refresh();
     await updateReportPreview();
-    setStatus("Bereit. Version 3.7 ist aktiv. Bestandsübersicht druckt Bilder mit.", "ok");
+    await refreshMarketsAndSales();
+    setStatus("Bereit. Version 3.8 ist aktiv. Preis, Märkte und Verkaufshistorie sind verfügbar.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {
