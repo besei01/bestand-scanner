@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.8</title>
+  <title>Bestand Scanner v3.9</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -548,7 +548,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.8: Verkauf · Märkte · Preis · Historie</p>
+    <p>Offline-Lagerverwaltung v3.9: Verkauf · Märkte · Preis · Historie</p>
   </header>
 
   <main>
@@ -586,7 +586,11 @@
     </section>
 
     <section class="card" id="marketCard">
-      <h2>Markt / Verkauf</h2>
+      <div class="section-head">
+        <h2>Markt / Verkauf</h2>
+        <button id="toggleMarketSection" class="toggle-section" type="button">Ausblenden</button>
+      </div>
+      <div id="marketSectionBody" class="collapsible-body">
       <p class="hint">Ein Verkauf wird nur in der Verkaufshistorie gespeichert, wenn ein aktiver Markt ausgewählt ist und Bestand reduziert wird.</p>
       <div class="row">
         <div>
@@ -608,6 +612,7 @@
       <div id="marketList" class="market-list"></div>
       <h3 style="font-size:15px;margin:14px 0 6px">Letzte Verkäufe</h3>
       <div id="recentSales" class="sales-list"></div>
+      </div>
     </section>
 
     <section id="unknownCard" class="card hidden">
@@ -826,6 +831,7 @@ let lastScanAt = 0;
 const $ = (id) => document.getElementById(id);
 
 const COLLAPSIBLE_SECTIONS = [
+  { key: "market", body: "marketSectionBody", button: "toggleMarketSection" },
   { key: "edit", body: "editSectionBody", button: "toggleEditSection" },
   { key: "list", body: "listSectionBody", button: "toggleListSection" },
   { key: "report", body: "reportSectionBody", button: "toggleReportSection" },
@@ -1796,6 +1802,7 @@ async function refreshMarketsAndSales() {
 }
 
 async function addMarketFromForm() {
+  openSection("market");
   const name = $("newMarketName").value.trim();
   if (!name) {
     alert("Bitte Marktname eingeben.");
@@ -1984,6 +1991,7 @@ function bindEvents() {
   $("clearActiveMarket").addEventListener("click", async () => { setActiveMarketId(""); await refreshMarketsAndSales(); });
   $("activeMarket").addEventListener("change", async (e) => { setActiveMarketId(e.target.value); await refreshMarketsAndSales(); });
   $("newMarketName").addEventListener("keydown", async (e) => { if (e.key === "Enter") { e.preventDefault(); await addMarketFromForm(); } });
+  $("toggleMarketSection").addEventListener("click", () => toggleSection("market"));
   $("toggleEditSection").addEventListener("click", () => toggleSection("edit"));
   $("toggleListSection").addEventListener("click", () => toggleSection("list"));
   $("toggleReportSection").addEventListener("click", () => toggleSection("report"));
@@ -2061,7 +2069,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.8 ist aktiv. Preis, Märkte und Verkaufshistorie sind verfügbar.", "ok");
+    setStatus("Bereit. Version 3.9 ist aktiv. Märkte können ausgeblendet werden.", "ok");
     focusScanSoon();
 
     if ("serviceWorker" in navigator) {
