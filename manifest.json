@@ -1,7 +1,7 @@
 {
   "name": "Bestand Scanner",
   "short_name": "Bestand",
-  "description": "Offline-Bestandsverwaltung v3.15 ohne automatisches Anlegen unbekannter Codes",
+  "description": "Offline-Bestandsverwaltung v3.16 mit vereinfachtem Scanbereich",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

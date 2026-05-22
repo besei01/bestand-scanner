@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.15</title>
+  <title>Bestand Scanner v3.16</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -109,18 +109,6 @@
     }
     .mode button { background: #e5e7eb; color: #111827; border: 1px solid var(--border); }
     .mode button.active { background: var(--primary); color: white; border-color: var(--primary); }
-    .scan-tools {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
-      margin: 8px 0 10px;
-    }
-    .scan-tools button {
-      padding: 8px 6px;
-      font-size: 12px;
-      border-radius: 10px;
-      min-width: 0;
-    }
     #scanInput {
       font-size: 22px;
       padding: 14px;
@@ -375,6 +363,19 @@
       background: #ecfdf5;
       color: #065f46;
     }
+    .scan-focus-status {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #fef2f2;
+      color: #991b1b;
+      font-weight: 800;
+      margin: 8px 0 10px;
+      line-height: 1.3;
+    }
+    .scan-focus-status.ready {
+      background: #ecfdf5;
+      color: #065f46;
+    }
     .sales-list {
       display: grid;
       gap: 8px;
@@ -483,14 +484,7 @@
       .row, .row3 { grid-template-columns: 1fr; }
       main { padding: 10px; padding-bottom: 28px; }
       .card { border-radius: 14px; padding: 12px; }
-      .scan-tools {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-      .scan-tools button {
-        font-size: 11px;
-        padding: 7px 4px;
-      }
-      .product-card {
+        .product-card {
         grid-template-columns: 62px 1fr;
         padding: 9px;
       }
@@ -613,31 +607,25 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.15: Verkauf · Märkte · Preis · Historie</p>
+    <p>Offline-Lagerverwaltung v3.16: Verkauf · Märkte · Preis · Historie</p>
   </header>
 
   <main>
     <section class="card">
       <h2>1. Scannen</h2>
 
-      <div class="mode">
-        <button id="modeOut" class="active" type="button">Warenausgang −</button>
-        <button id="modeIn" type="button">Wareneingang +</button>
-      </div>
-
-      <div class="scan-tools">
-        <button id="focusScan" class="secondary" type="button">Scan-Feld</button>
-        <button id="quickMode" class="secondary" type="button">Ausgang −</button>
-        <button id="keyboardToggle" class="secondary" type="button">Tastatur an</button>
-      </div>
+      <label for="scanInput">Hier scannen …</label>
+      <input id="scanInput" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Hier scannen …">
 
       <div id="scanMarketInfo" class="scan-market-info">Aktiver Markt: keiner</div>
 
+      <div id="scanFocusStatus" class="scan-focus-status">
+        Nicht scanbereit: Bitte in das Feld „Hier scannen …“ tippen. Nur wenn der Cursor dort aktiv ist, wird ein Scan verarbeitet.
+      </div>
+
+      <div id="scanStatus" class="status">Bereit. Scannerbuchungen reduzieren immer Menge 1.</div>
+
       <div class="row">
-        <div>
-          <label for="qty">Menge pro Scan</label>
-          <input id="qty" type="number" min="1" step="1" value="1">
-        </div>
         <div>
           <label for="scanKeyboard">Scan-Feld</label>
           <select id="scanKeyboard">
@@ -645,17 +633,16 @@
             <option value="manual">Manuell: Tastatur erlauben</option>
           </select>
         </div>
+        <div>
+          <label for="scanInfo">Hinweis</label>
+          <input id="scanInfo" value="Scanner bucht immer Warenausgang −1" disabled>
+        </div>
       </div>
 
       <div class="row">
         <label class="checkrow"><input id="doubleScanGuard" type="checkbox" checked> Gleichen Barcode kurz ignorieren</label>
         <label class="checkrow"><input id="preventNegative" type="checkbox" checked> Bestand nicht unter 0 buchen</label>
       </div>
-
-      <label for="scanInput">Barcode / Artikelnummer</label>
-      <input id="scanInput" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Hier scannen …">
-      <p class="hint">Der Scanner sollte nach dem Code „Enter“ senden. QR-Codes werden aus der Artikelnummer erzeugt, aber nicht gespeichert.</p>
-      <div id="scanStatus" class="status">Bereit. Daten werden lokal auf diesem Gerät gespeichert.</div>
     </section>
 
     <section class="card" id="marketCard">
@@ -1253,11 +1240,7 @@ function setStatus(message, type = "") {
 }
 
 function setMode(nextMode) {
-  mode = nextMode;
-  $("modeOut").classList.toggle("active", mode === "out");
-  $("modeIn").classList.toggle("active", mode === "in");
-  $("quickMode").textContent = mode === "out" ? "Ausgang −" : "Eingang +";
-  $("quickMode").className = mode === "out" ? "secondary" : "good";
+  mode = "out";
   focusScanSoon();
 }
 
@@ -1265,7 +1248,19 @@ function focusScanSoon() {
   setTimeout(() => {
     $("scanInput").focus();
     $("scanInput").select();
+    updateScanFocusStatus();
   }, 80);
+}
+
+function updateScanFocusStatus() {
+  const el = $("scanFocusStatus");
+  const scanInput = $("scanInput");
+  if (!el || !scanInput) return;
+  const ready = document.activeElement === scanInput;
+  el.classList.toggle("ready", ready);
+  el.textContent = ready
+    ? "Scanbereit: Cursor ist im Feld „Hier scannen …“."
+    : "Nicht scanbereit: Bitte in das Feld „Hier scannen …“ tippen. Nur wenn der Cursor dort aktiv ist, wird ein Scan verarbeitet.";
 }
 
 function cleanBarcode(value) {
@@ -1319,10 +1314,8 @@ function applyScanKeyboardMode() {
   const isScannerMode = $("scanKeyboard").value === "scanner";
   if (isScannerMode) {
     scanInput.setAttribute("inputmode", "none");
-    $("keyboardToggle").textContent = "Tastatur an";
   } else {
     scanInput.removeAttribute("inputmode");
-    $("keyboardToggle").textContent = "Scanner-Modus";
   }
 }
 
@@ -1355,8 +1348,8 @@ async function processBarcode(raw) {
   }
   rememberScan(barcode);
 
-  const qty = Math.max(1, intVal("qty", 1));
-  const delta = mode === "out" ? -qty : qty;
+  const qty = 1;
+  const delta = -1;
   const product = await getProduct(barcode);
 
   if (!product) {
@@ -1392,7 +1385,7 @@ async function processBarcode(raw) {
   const sale = delta < 0 ? await recordSaleIfNeeded(product, -delta, before, after) : null;
   const saleText = sale ? `\nVerkauf erfasst: ${sale.marketName} · ${formatMoney(sale.total)}` : "";
 
-  setStatus(`${barcode}\n${mode === "out" ? "Warenausgang" : "Wareneingang"}: ${delta > 0 ? "+" : ""}${delta}\nBestand: ${before} → ${after}${saleText}`, "ok");
+  setStatus(`${barcode}\nWarenausgang: -1\nBestand: ${before} → ${after}${saleText}`, "ok");
   $("scanInput").value = "";
   await refresh();
   focusScanSoon();
@@ -2199,11 +2192,6 @@ async function printInventoryReport() {
 
 
 function bindEvents() {
-  $("modeOut").addEventListener("click", () => setMode("out"));
-  $("modeIn").addEventListener("click", () => setMode("in"));
-  $("quickMode").addEventListener("click", () => setMode(mode === "out" ? "in" : "out"));
-  $("focusScan").addEventListener("click", focusScanSoon);
-  $("keyboardToggle").addEventListener("click", toggleKeyboardMode);
   $("addMarket").addEventListener("click", addMarketFromForm);
   $("clearActiveMarket").addEventListener("click", async () => { setActiveMarketId(""); await refreshMarketsAndSales(); });
   $("activeMarket").addEventListener("change", async (e) => { setActiveMarketId(e.target.value); await refreshMarketsAndSales(); });
@@ -2231,6 +2219,9 @@ function bindEvents() {
       await processBarcode(e.target.value);
     }
   });
+  $("scanInput").addEventListener("focus", updateScanFocusStatus);
+  $("scanInput").addEventListener("blur", updateScanFocusStatus);
+  document.addEventListener("click", () => setTimeout(updateScanFocusStatus, 0));
 
   $("imageFile").addEventListener("change", async (e) => {
     try {
@@ -2292,8 +2283,9 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.15 ist aktiv. Unbekannte Codes werden nicht automatisch angelegt.", "ok");
+    setStatus("Bereit. Version 3.16 ist aktiv. Scanbereich wurde vereinfacht.", "ok");
     focusScanSoon();
+    updateScanFocusStatus();
 
     if ("serviceWorker" in navigator) {
       try { await navigator.serviceWorker.register("./sw.js"); }
