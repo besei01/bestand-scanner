@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.17
+# Bestand Scanner PWA v3.18
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -180,3 +180,9 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Backup-Erinnerung
 - Marktbericht mit Umsatz/Menge je Artikel
 - Marktbericht kann gedruckt oder als PDF gespeichert werden
+
+
+## Neu in Version 3.18
+
+- Fehlerkorrektur: JavaScript-Syntaxfehler aus Version 3.17 behoben.
+- Buttons und Bedienelemente reagieren wieder.

@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.17</title>
+  <title>Bestand Scanner v3.18</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -738,7 +738,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.17: Marktmodus · Verkauf · Storno · Bericht</p>
+    <p>Offline-Lagerverwaltung v3.18: Marktmodus · Verkauf · Storno · Bericht</p>
   </header>
 
   <main>
@@ -2313,7 +2313,7 @@ async function refreshSalesHistory() {
   });
 }
 
-async function refreshMarketsAndSalesasync function refreshMarketsAndSales() {
+async function refreshMarketsAndSales() {
   const markets = await getAllMarkets();
   let activeId = getActiveMarketId();
   if (activeId && !markets.some(m => m.id === activeId)) {
@@ -2773,7 +2773,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.17 ist aktiv. Marktmodus, Storno und Marktbericht sind verfügbar.", "ok");
+    setStatus("Bereit. Version 3.18 ist aktiv. Buttons funktionieren wieder.", "ok");
     focusScanSoon();
     updateScanFocusStatus();
 
