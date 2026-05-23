@@ -1,7 +1,7 @@
 {
   "name": "Bestand Scanner",
   "short_name": "Bestand",
-  "description": "Offline-Bestandsverwaltung v3.16 mit vereinfachtem Scanbereich",
+  "description": "Offline-Bestandsverwaltung v3.17 mit Marktmodus, Storno und Marktbericht",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

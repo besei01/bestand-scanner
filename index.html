@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.16</title>
+  <title>Bestand Scanner v3.17</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -376,6 +376,122 @@
       background: #ecfdf5;
       color: #065f46;
     }
+    .ready-panel {
+      border-radius: 16px;
+      padding: 12px;
+      margin: 10px 0;
+      border: 2px solid #991b1b;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+    .ready-panel.ready {
+      border-color: #047857;
+      background: #ecfdf5;
+      color: #065f46;
+    }
+    .ready-title {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: .03em;
+      margin-bottom: 3px;
+    }
+    .ready-detail {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+    .last-sale-card {
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 10px;
+      align-items: start;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px;
+      margin-top: 10px;
+      background: #fff;
+    }
+    .last-sale-card.empty {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .last-sale-card img {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+    }
+    .last-sale-title {
+      font-weight: 900;
+      margin-bottom: 3px;
+    }
+    .last-sale-meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .last-sale-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .last-sale-actions button {
+      width: auto;
+      min-width: 130px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    .backup-reminder {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #fffbeb;
+      color: #92400e;
+      font-weight: 800;
+      margin: 10px 0;
+      line-height: 1.35;
+    }
+    .backup-reminder.hidden {
+      display: none !important;
+    }
+    .cancelled-sale {
+      opacity: .62;
+      background: #f9fafb;
+    }
+    .cancelled-label {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 2px 7px;
+      background: #fee2e2;
+      color: #991b1b;
+      font-size: 11px;
+      font-weight: 900;
+      margin-left: 6px;
+    }
+    .market-report-preview {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: white;
+    }
+    .market-report-preview table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .market-report-preview th,
+    .market-report-preview td {
+      padding: 6px 7px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+    .market-report-preview th {
+      background: #f9fafb;
+    }
     .sales-list {
       display: grid;
       gap: 8px;
@@ -506,6 +622,13 @@
       .sales-history-meta {
         grid-template-columns: 1fr 1fr;
       }
+      .last-sale-card {
+        grid-template-columns: 58px 1fr;
+      }
+      .last-sale-card img {
+        width: 54px;
+        height: 54px;
+      }
       .market-row {
         grid-template-columns: 1fr;
       }
@@ -601,13 +724,21 @@
         margin-top: 3mm;
         font-size: 8pt;
       }
+      .market-print-report h1 {
+        font-size: 14pt;
+        margin: 0 0 2mm 0;
+      }
+      .market-print-report .print-meta {
+        font-size: 8pt;
+        margin-bottom: 3mm;
+      }
     }
   </style>
 </head>
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.16: Verkauf · Märkte · Preis · Historie</p>
+    <p>Offline-Lagerverwaltung v3.17: Marktmodus · Verkauf · Storno · Bericht</p>
   </header>
 
   <main>
@@ -618,6 +749,14 @@
       <input id="scanInput" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Hier scannen …">
 
       <div id="scanMarketInfo" class="scan-market-info">Aktiver Markt: keiner</div>
+      <div id="readyPanel" class="ready-panel">
+        <div id="readyTitle" class="ready-title">NICHT BEREIT</div>
+        <div id="readyDetail" class="ready-detail">Kein Markt aktiv oder Cursor nicht im Scan-Feld.</div>
+      </div>
+
+      <div id="backupReminder" class="backup-reminder hidden"></div>
+
+      <div id="lastSaleCard" class="last-sale-card empty">Noch kein Verkauf erfasst.</div>
 
       <div id="scanFocusStatus" class="scan-focus-status">
         Nicht scanbereit: Bitte in das Feld „Hier scannen …“ tippen. Nur wenn der Cursor dort aktiv ist, wird ein Scan verarbeitet.
@@ -666,6 +805,7 @@
       </div>
       <div class="actions" style="margin-top:12px">
         <button id="addMarket" class="good" type="button">Markt hinzufügen</button>
+        <button id="finishMarket" class="warn" type="button">Markt abschließen</button>
         <button id="clearActiveMarket" class="secondary" type="button">Kein aktiver Markt</button>
       </div>
       <div id="activeMarketInfo" class="active-market-pill">Aktiver Markt: keiner</div>
@@ -871,6 +1011,25 @@
           <button id="updateReport" type="button">Vorschau aktualisieren</button>
           <button id="printReport" class="good" type="button">Drucken / als PDF sichern</button>
         </div>
+        <hr style="border:0;border-top:1px solid #e5e7eb;margin:16px 0">
+        <h3 style="font-size:15px;margin:0 0 8px">Marktbericht / PDF</h3>
+        <div class="report-controls">
+          <div>
+            <label for="marketReportSelect">Markt</label>
+            <select id="marketReportSelect">
+              <option value="">Aktiver Markt</option>
+            </select>
+          </div>
+          <div>
+            <label for="marketReportSearch">Artikel filtern</label>
+            <input id="marketReportSearch" autocomplete="off" placeholder="optional …">
+          </div>
+        </div>
+        <div class="actions" style="margin-top:12px">
+          <button id="updateMarketReport" type="button">Marktbericht aktualisieren</button>
+          <button id="printMarketReport" class="good" type="button">Marktbericht drucken / PDF</button>
+        </div>
+        <div id="marketReportPreview" class="market-report-preview"></div>
         <div id="reportPreview" class="report-preview"></div>
       </div>
     </section>
@@ -1138,6 +1297,9 @@ function putSale(sale) {
       quantity: Number(sale.quantity || 0),
       unitPrice: parsePrice(sale.unitPrice ?? sale.price ?? 0),
       total: parsePrice(sale.total ?? (Number(sale.quantity || 0) * parsePrice(sale.unitPrice ?? sale.price ?? 0))),
+      status: sale.status || "active",
+      cancelledAt: sale.cancelledAt || "",
+      cancellationReason: sale.cancellationReason || "",
       stockBefore: Number(sale.stockBefore ?? sale.before ?? 0),
       stockAfter: Number(sale.stockAfter ?? sale.after ?? 0)
     };
@@ -1154,7 +1316,10 @@ function addSale(sale) {
       ts: sale.ts || new Date().toISOString(),
       quantity: Number(sale.quantity || 0),
       unitPrice: parsePrice(sale.unitPrice ?? sale.price ?? 0),
-      total: parsePrice(sale.total ?? (Number(sale.quantity || 0) * parsePrice(sale.unitPrice ?? sale.price ?? 0)))
+      total: parsePrice(sale.total ?? (Number(sale.quantity || 0) * parsePrice(sale.unitPrice ?? sale.price ?? 0))),
+      status: sale.status || "active",
+      cancelledAt: sale.cancelledAt || "",
+      cancellationReason: sale.cancellationReason || ""
     };
     delete clean.id;
     const req = tx("sales", "readwrite").add(clean);
@@ -1177,13 +1342,33 @@ function getAllSales() {
         unitPrice: parsePrice(s.unitPrice ?? s.price ?? 0),
         total: parsePrice(s.total ?? 0),
         stockBefore: Number(s.stockBefore ?? s.before ?? 0),
-        stockAfter: Number(s.stockAfter ?? s.after ?? 0)
+        stockAfter: Number(s.stockAfter ?? s.after ?? 0),
+        status: s.status || "active",
+        cancelledAt: s.cancelledAt || "",
+        cancellationReason: s.cancellationReason || ""
       }));
       rows.sort((a,b) => (b.ts || "").localeCompare(a.ts || ""));
       resolve(rows);
     };
     req.onerror = () => reject(req.error);
   });
+}
+
+function updateSale(sale) {
+  return new Promise((resolve, reject) => {
+    const req = tx("sales", "readwrite").put(sale);
+    req.onsuccess = () => resolve(sale);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getActiveSales() {
+  return (await getAllSales()).filter(s => (s.status || "active") === "active");
+}
+
+async function getLastActiveSale() {
+  const active = await getActiveSales();
+  return active.length ? active[0] : null;
 }
 
 async function recordSaleIfNeeded(product, quantity, stockBefore, stockAfter) {
@@ -1228,9 +1413,181 @@ async function requireActiveMarketForStockReduction() {
   const market = await getValidActiveMarket();
   if (market) return market;
   setStatus("Blockiert: Kein aktiver Markt ausgewählt.\nBitte zuerst unter „Markt / Verkauf“ einen Markt auswählen oder anlegen.", "bad");
+  playFeedback("bad");
   openSection("market");
   return null;
 }
+
+
+function playFeedback(type = "ok") {
+  try {
+    if (navigator.vibrate) navigator.vibrate(type === "ok" ? 40 : [80, 40, 80]);
+  } catch {}
+
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = type === "ok" ? 880 : 220;
+    gain.gain.value = 0.06;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    setTimeout(() => {
+      osc.stop();
+      ctx.close();
+    }, type === "ok" ? 70 : 160);
+  } catch {}
+}
+
+async function updateReadyPanel() {
+  const panel = $("readyPanel");
+  if (!panel) return;
+
+  const scanInput = $("scanInput");
+  const market = await getValidActiveMarket();
+  const focused = document.activeElement === scanInput;
+  const ready = !!market && focused;
+
+  panel.classList.toggle("ready", ready);
+  $("readyTitle").textContent = ready ? "VERKAUFSBEREIT" : "NICHT BEREIT";
+
+  const missing = [];
+  if (!market) missing.push("kein Markt aktiv");
+  if (!focused) missing.push("Cursor nicht im Scan-Feld");
+
+  $("readyDetail").textContent = ready
+    ? `Markt: ${market.name} · Scanner bucht Warenausgang −1`
+    : missing.join(" · ");
+}
+
+async function checkBackupReminder() {
+  const box = $("backupReminder");
+  if (!box) return;
+
+  const sales = await getActiveSales();
+  const lastBackupAt = localStorage.getItem("bestand-scanner-last-full-backup") || "";
+  const today = new Date().toISOString().slice(0, 10);
+  const backedUpToday = lastBackupAt.slice(0, 10) === today;
+  const thresholdReached = sales.length > 0 && sales.length % 50 === 0;
+
+  if (!backedUpToday || thresholdReached) {
+    box.classList.remove("hidden");
+    box.textContent = thresholdReached
+      ? `Backup-Hinweis: ${sales.length} aktive Verkäufe gespeichert. Bitte Vollbackup exportieren.`
+      : "Backup-Hinweis: Heute wurde noch kein Vollbackup exportiert.";
+  } else {
+    box.classList.add("hidden");
+    box.textContent = "";
+  }
+}
+
+async function renderLastSaleCard() {
+  const box = $("lastSaleCard");
+  if (!box) return;
+
+  const sale = await getLastActiveSale();
+  if (!sale) {
+    box.className = "last-sale-card empty";
+    box.textContent = "Noch kein aktiver Verkauf erfasst.";
+    return;
+  }
+
+  const product = await getProduct(sale.barcode);
+  const img = product?.image
+    ? `<img src="${escapeAttr(product.image)}" alt="">`
+    : `<div class="empty-thumb">kein Bild</div>`;
+
+  box.className = "last-sale-card";
+  box.innerHTML = `
+    <div>${img}</div>
+    <div>
+      <div class="last-sale-title">Letzter Verkauf: ${escapeHtml(sale.barcode)}</div>
+      <div class="last-sale-meta">
+        Markt: ${escapeHtml(sale.marketName)}<br>
+        Zeit: ${escapeHtml(formatDateTime(sale.ts))}<br>
+        Menge: ${Number(sale.quantity || 0)} · Preis: ${formatMoney(sale.unitPrice)} · Summe: ${formatMoney(sale.total)}<br>
+        Bestand: ${Number(sale.stockBefore || 0)} → ${Number(sale.stockAfter || 0)}
+      </div>
+      <div class="last-sale-actions">
+        <button id="undoLastSale" class="warn" type="button">Letzten Verkauf rückgängig</button>
+      </div>
+    </div>
+  `;
+
+  $("undoLastSale").addEventListener("click", () => cancelSaleById(sale.id, "Letzter Verkauf rückgängig"));
+}
+
+async function cancelSaleById(id, reason = "Storno") {
+  const sales = await getAllSales();
+  const sale = sales.find(s => String(s.id) === String(id));
+  if (!sale || (sale.status || "active") !== "active") {
+    setStatus("Storno nicht möglich: Verkauf wurde nicht gefunden oder ist bereits storniert.", "warn");
+    return;
+  }
+
+  const ok = confirm(`Verkauf wirklich stornieren?\n\nArtikel: ${sale.barcode}\nMarkt: ${sale.marketName}\nSumme: ${formatMoney(sale.total)}\n\nDer Bestand wird wieder erhöht.`);
+  if (!ok) return;
+
+  const product = await getProduct(sale.barcode);
+  if (product) {
+    product.stock = Number(product.stock || 0) + Number(sale.quantity || 0);
+    await putProduct(product);
+  }
+
+  sale.status = "cancelled";
+  sale.cancelledAt = new Date().toISOString();
+  sale.cancellationReason = reason;
+  await updateSale(sale);
+
+  setStatus(`Storno erfasst: ${sale.barcode}\nBestand wurde um ${sale.quantity} erhöht.`, "warn");
+  playFeedback("bad");
+  await refresh();
+}
+
+async function remindActiveMarketOnStartup() {
+  const market = await getValidActiveMarket();
+  if (!market) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `bestand-scanner-market-confirmed-${today}`;
+  const confirmed = localStorage.getItem(key);
+
+  if (confirmed === market.id) return;
+
+  const keep = confirm(`Aktiver Markt ist noch gesetzt:\n\n${market.name}\n\nSoll weiter auf diesen Markt gebucht werden?`);
+  if (keep) {
+    localStorage.setItem(key, market.id);
+  } else {
+    setActiveMarketId("");
+    await refreshMarketsAndSales();
+    setStatus("Aktiver Markt wurde zur Sicherheit entfernt.", "warn");
+  }
+}
+
+async function finishActiveMarket() {
+  const market = await getValidActiveMarket();
+  if (!market) {
+    setStatus("Kein aktiver Markt zum Abschließen.", "warn");
+    return;
+  }
+
+  const sales = (await getActiveSales()).filter(s => s.marketId === market.id);
+  const qty = sales.reduce((sum, s) => sum + Number(s.quantity || 0), 0);
+  const revenue = sales.reduce((sum, s) => sum + Number(s.total || 0), 0);
+
+  const ok = confirm(`Markt abschließen?\n\n${market.name}\nVerkäufe: ${sales.length}\nMenge: ${qty}\nUmsatz: ${formatMoney(revenue)}\n\nDanach ist kein Markt mehr aktiv.`);
+  if (!ok) return;
+
+  setActiveMarketId("");
+  localStorage.removeItem("bestand-scanner-market-closed-message");
+  await refreshMarketsAndSales();
+  setStatus(`Markt abgeschlossen: ${market.name}\nVerkäufe: ${sales.length}\nMenge: ${qty}\nUmsatz: ${formatMoney(revenue)}\nAktiver Markt: keiner`, "ok");
+}
+
 
 
 function setStatus(message, type = "") {
@@ -1261,6 +1618,7 @@ function updateScanFocusStatus() {
   el.textContent = ready
     ? "Scanbereit: Cursor ist im Feld „Hier scannen …“."
     : "Nicht scanbereit: Bitte in das Feld „Hier scannen …“ tippen. Nur wenn der Cursor dort aktiv ist, wird ein Scan verarbeitet.";
+  updateReadyPanel();
 }
 
 function cleanBarcode(value) {
@@ -1342,6 +1700,7 @@ async function processBarcode(raw) {
 
   if (isDuplicateScan(barcode)) {
     setStatus(`Doppelscan ignoriert: ${barcode}`, "warn");
+    playFeedback("bad");
     $("scanInput").value = "";
     focusScanSoon();
     return;
@@ -1355,6 +1714,7 @@ async function processBarcode(raw) {
   if (!product) {
     $("unknownCard").classList.add("hidden");
     setStatus("Unbekannter Code: " + barcode + "\nDieser QR-/Barcode ist nicht in der Artikelliste vorhanden. Es wurde nichts gebucht.", "bad");
+    playFeedback("bad");
     $("scanInput").value = "";
     focusScanSoon();
     return;
@@ -1374,6 +1734,7 @@ async function processBarcode(raw) {
 
   if (delta < 0 && $("preventNegative").checked && after < 0) {
     setStatus(`Blockiert: ${barcode}\nBestand würde unter 0 fallen.\nBestand bleibt: ${before}`, "bad");
+    playFeedback("bad");
     $("scanInput").value = "";
     await refresh();
     focusScanSoon();
@@ -1386,6 +1747,7 @@ async function processBarcode(raw) {
   const saleText = sale ? `\nVerkauf erfasst: ${sale.marketName} · ${formatMoney(sale.total)}` : "";
 
   setStatus(`${barcode}\nWarenausgang: -1\nBestand: ${before} → ${after}${saleText}`, "ok");
+  playFeedback("ok");
   $("scanInput").value = "";
   await refresh();
   focusScanSoon();
@@ -1705,7 +2067,9 @@ async function exportFullBackup() {
     markets,
     sales
   };
+  localStorage.setItem("bestand-scanner-last-full-backup", new Date().toISOString());
   downloadText("bestand-vollbackup-mit-bildern-maerkten-verkaeufen.json", JSON.stringify(backup, null, 2), "application/json;charset=utf-8");
+  await checkBackupReminder();
 }
 
 async function importFullBackup(file) {
@@ -1899,8 +2263,10 @@ async function refreshSalesHistory() {
     return true;
   });
 
-  const totalQty = rows.reduce((sum, s) => sum + Number(s.quantity || 0), 0);
-  const totalRevenue = rows.reduce((sum, s) => sum + Number(s.total || 0), 0);
+  const activeRows = rows.filter(s => (s.status || "active") === "active");
+  const cancelledRows = rows.length - activeRows.length;
+  const totalQty = activeRows.reduce((sum, s) => sum + Number(s.quantity || 0), 0);
+  const totalRevenue = activeRows.reduce((sum, s) => sum + Number(s.total || 0), 0);
 
   let displayed = rows;
   if (limitValue !== "all") {
@@ -1908,7 +2274,7 @@ async function refreshSalesHistory() {
   }
 
   $("salesHistorySummary").textContent =
-    `${rows.length} Verkaufseinträge · Menge ${totalQty} · Umsatz ${formatMoney(totalRevenue)}` +
+    `${rows.length} Verkaufseinträge · aktiv ${activeRows.length} · storniert ${cancelledRows} · Menge ${totalQty} · Umsatz ${formatMoney(totalRevenue)}` +
     (displayed.length !== rows.length ? ` · angezeigt ${displayed.length}` : "");
 
   const box = $("salesHistoryRows");
@@ -1919,11 +2285,12 @@ async function refreshSalesHistory() {
   }
 
   for (const s of displayed) {
+    const cancelled = (s.status || "active") !== "active";
     const row = document.createElement("div");
-    row.className = "sales-history-row";
+    row.className = "sales-history-row" + (cancelled ? " cancelled-sale" : "");
     row.innerHTML = `
       <div class="sales-history-top">
-        <span class="sales-history-code">${escapeHtml(s.barcode)}</span>
+        <span class="sales-history-code">${escapeHtml(s.barcode)}${cancelled ? `<span class="cancelled-label">STORNIERT</span>` : ""}</span>
         <span class="sales-history-sum">${formatMoney(s.total)}</span>
       </div>
       <div class="sales-history-meta">
@@ -1932,13 +2299,21 @@ async function refreshSalesHistory() {
         <div class="meta-item"><span class="meta-label">Menge</span><span class="meta-value">${Number(s.quantity || 0)}</span></div>
         <div class="meta-item"><span class="meta-label">Preis</span><span class="meta-value">${formatMoney(s.unitPrice)}</span></div>
       </div>
-      <div class="sale-meta">Bestand: ${Number(s.stockBefore || 0)} → ${Number(s.stockAfter || 0)}</div>
+      <div class="sale-meta">
+        Bestand: ${Number(s.stockBefore || 0)} → ${Number(s.stockAfter || 0)}
+        ${cancelled ? ` · storniert: ${escapeHtml(formatDateTime(s.cancelledAt))}` : ""}
+      </div>
+      ${cancelled ? "" : `<div class="actions" style="margin-top:8px"><button class="warn" data-cancel-sale="${escapeAttr(s.id)}" type="button">Verkauf stornieren</button></div>`}
     `;
     box.appendChild(row);
   }
+
+  box.querySelectorAll("[data-cancel-sale]").forEach(btn => {
+    btn.addEventListener("click", () => cancelSaleById(btn.getAttribute("data-cancel-sale"), "Storno aus Verkaufshistorie"));
+  });
 }
 
-async function refreshMarketsAndSales() {
+async function refreshMarketsAndSalesasync function refreshMarketsAndSales() {
   const markets = await getAllMarkets();
   let activeId = getActiveMarketId();
   if (activeId && !markets.some(m => m.id === activeId)) {
@@ -1991,7 +2366,7 @@ async function refreshMarketsAndSales() {
 
   const recent = $("recentSales");
   if (recent) {
-    const sales = (await getAllSales()).slice(0, 12);
+    const sales = (await getActiveSales()).slice(0, 12);
     recent.innerHTML = "";
     if (!sales.length) {
       recent.innerHTML = `<div class="hint">Noch keine Verkäufe gespeichert.</div>`;
@@ -2009,6 +2384,10 @@ async function refreshMarketsAndSales() {
   }
 
   await refreshSalesHistory();
+  await renderLastSaleCard();
+  await updateReadyPanel();
+  await checkBackupReminder();
+  await updateMarketReportPreview();
 }
 
 async function addMarketFromForm() {
@@ -2027,7 +2406,7 @@ async function addMarketFromForm() {
 
 async function exportSalesCsv() {
   const sales = await getAllSales();
-  const lines = ["zeit;markt;artikelnummer;menge;einzelpreis;summe;bestand_vorher;bestand_nachher"];
+  const lines = ["zeit;markt;artikelnummer;menge;einzelpreis;summe;bestand_vorher;bestand_nachher;status;storniert_am;storno_grund"];
   for (const s of [...sales].reverse()) {
     lines.push([
       s.ts,
@@ -2037,7 +2416,10 @@ async function exportSalesCsv() {
       formatPrice(s.unitPrice),
       formatPrice(s.total),
       s.stockBefore,
-      s.stockAfter
+      s.stockAfter,
+      s.status || "active",
+      s.cancelledAt || "",
+      s.cancellationReason || ""
     ].map(csvEscape).join(";"));
   }
   downloadText("verkaufshistorie.csv", lines.join("\n"), "text/csv;charset=utf-8");
@@ -2057,6 +2439,107 @@ function sortProductsForReport(rows, sortBy) {
     return (a.category || "").localeCompare(b.category || "", "de", { numeric: true }) || a.barcode.localeCompare(b.barcode, "de", { numeric: true });
   });
   return copy;
+}
+
+
+async function updateMarketReportSelect() {
+  const select = $("marketReportSelect");
+  if (!select) return;
+
+  const markets = await getAllMarkets();
+  const current = select.value;
+  select.innerHTML = `<option value="">Aktiver Markt</option>`;
+
+  for (const market of markets) {
+    const opt = document.createElement("option");
+    opt.value = market.id;
+    opt.textContent = market.name;
+    select.appendChild(opt);
+  }
+
+  if (current && markets.some(m => m.id === current)) select.value = current;
+}
+
+async function getMarketReportData() {
+  await updateMarketReportSelect();
+
+  const selected = $("marketReportSelect")?.value || "";
+  const activeId = getActiveMarketId();
+  const marketId = selected || activeId;
+  const markets = await getAllMarkets();
+  const market = markets.find(m => m.id === marketId);
+  const query = ($("marketReportSearch")?.value || "").trim().toLowerCase();
+
+  let sales = await getActiveSales();
+  sales = sales.filter(s => s.marketId === marketId);
+  if (query) sales = sales.filter(s => String(s.barcode || "").toLowerCase().includes(query));
+
+  const byArticle = new Map();
+  for (const s of sales) {
+    const key = s.barcode;
+    const row = byArticle.get(key) || { barcode: key, quantity: 0, total: 0, unitPrice: s.unitPrice };
+    row.quantity += Number(s.quantity || 0);
+    row.total += Number(s.total || 0);
+    row.unitPrice = s.unitPrice;
+    byArticle.set(key, row);
+  }
+
+  const rows = [...byArticle.values()].sort((a,b) => a.barcode.localeCompare(b.barcode, "de", { numeric: true }));
+  const totalQty = rows.reduce((sum, r) => sum + r.quantity, 0);
+  const totalRevenue = rows.reduce((sum, r) => sum + r.total, 0);
+
+  return { market, marketId, rows, totalQty, totalRevenue, salesCount: sales.length, query };
+}
+
+function buildMarketReportHtml(data, forPrint = false) {
+  const marketName = data.market ? data.market.name : "Kein Markt ausgewählt";
+  const generated = new Date().toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+
+  const body = data.rows.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${escapeHtml(r.barcode)}</td>
+      <td>${r.quantity}</td>
+      <td>${formatMoney(r.unitPrice)}</td>
+      <td>${formatMoney(r.total)}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="5">Keine Verkäufe für diesen Filter.</td></tr>`;
+
+  if (forPrint) {
+    return `
+      <div class="market-print-report">
+        <h1>Marktbericht</h1>
+        <div class="print-meta">Markt: ${escapeHtml(marketName)} · Erstellt: ${escapeHtml(generated)} · Filter: ${escapeHtml(data.query || "—")}</div>
+        <table class="print-table">
+          <thead><tr><th>#</th><th>Artikelnummer</th><th>Menge</th><th>Einzelpreis</th><th>Umsatz</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table>
+        <div class="print-summary">Verkaufseinträge: ${data.salesCount} · Menge: ${data.totalQty} · Umsatz: ${formatMoney(data.totalRevenue)}</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="report-title">Marktbericht: ${escapeHtml(marketName)} · Umsatz ${formatMoney(data.totalRevenue)}</div>
+    <table>
+      <thead><tr><th>#</th><th>Artikelnummer</th><th>Menge</th><th>Einzelpreis</th><th>Umsatz</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+    <div class="report-summary">Verkaufseinträge: ${data.salesCount} · Menge: ${data.totalQty} · Filter: ${escapeHtml(data.query || "—")}</div>
+  `;
+}
+
+async function updateMarketReportPreview() {
+  const box = $("marketReportPreview");
+  if (!box) return;
+  const data = await getMarketReportData();
+  box.innerHTML = buildMarketReportHtml(data, false);
+}
+
+async function printMarketReport() {
+  const data = await getMarketReportData();
+  $("printReportArea").innerHTML = buildMarketReportHtml(data, true);
+  window.print();
 }
 
 async function updateReportCategoryOptions(products = null) {
@@ -2192,9 +2675,16 @@ async function printInventoryReport() {
 
 
 function bindEvents() {
+  $("finishMarket").addEventListener("click", finishActiveMarket);
+  $("updateMarketReport").addEventListener("click", updateMarketReportPreview);
+  $("printMarketReport").addEventListener("click", printMarketReport);
+  ["marketReportSelect", "marketReportSearch"].forEach(id => {
+    $(id).addEventListener("input", updateMarketReportPreview);
+    $(id).addEventListener("change", updateMarketReportPreview);
+  });
   $("addMarket").addEventListener("click", addMarketFromForm);
-  $("clearActiveMarket").addEventListener("click", async () => { setActiveMarketId(""); await refreshMarketsAndSales(); });
-  $("activeMarket").addEventListener("change", async (e) => { setActiveMarketId(e.target.value); await refreshMarketsAndSales(); });
+  $("clearActiveMarket").addEventListener("click", async () => { setActiveMarketId(""); await refreshMarketsAndSales(); await updateReadyPanel(); });
+  $("activeMarket").addEventListener("change", async (e) => { setActiveMarketId(e.target.value); await refreshMarketsAndSales(); await updateReadyPanel(); });
   $("newMarketName").addEventListener("keydown", async (e) => { if (e.key === "Enter") { e.preventDefault(); await addMarketFromForm(); } });
   ["salesHistoryMarketFilter", "salesHistorySearch", "salesHistoryLimit"].forEach(id => {
     $(id).addEventListener("input", refreshSalesHistory);
@@ -2283,7 +2773,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.16 ist aktiv. Scanbereich wurde vereinfacht.", "ok");
+    setStatus("Bereit. Version 3.17 ist aktiv. Marktmodus, Storno und Marktbericht sind verfügbar.", "ok");
     focusScanSoon();
     updateScanFocusStatus();
 

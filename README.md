@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.16
+# Bestand Scanner PWA v3.17
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -165,3 +165,18 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Das Scan-Feld steht jetzt ganz oben.
 - Der aktive Markt wird direkt unter dem Scan-Feld angezeigt.
 - Es gibt eine rote Warnung, wenn der Cursor nicht im Scan-Feld aktiv ist.
+
+
+## Neu in Version 3.17
+
+- Großer Status `VERKAUFSBEREIT` / `NICHT BEREIT`
+- Letzter Verkauf wird groß im Scanbereich angezeigt
+- Letzten Verkauf rückgängig machen
+- Verkauf stornieren direkt in der Verkaufshistorie
+- Storno erhöht den Bestand wieder und markiert den Verkauf als storniert
+- Akustisches/haptisches Feedback bei Erfolg und Fehler
+- Markt abschließen mit Zusammenfassung
+- Schutz vor versehentlich aktivem Markt beim App-Start
+- Backup-Erinnerung
+- Marktbericht mit Umsatz/Menge je Artikel
+- Marktbericht kann gedruckt oder als PDF gespeichert werden
