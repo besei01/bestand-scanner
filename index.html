@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.18</title>
+  <title>Bestand Scanner v3.19</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -402,7 +402,7 @@
     }
     .last-sale-card {
       display: grid;
-      grid-template-columns: 70px 1fr;
+      grid-template-columns: 122px 1fr;
       gap: 10px;
       align-items: start;
       border: 1px solid var(--border);
@@ -417,12 +417,16 @@
       font-size: 13px;
     }
     .last-sale-card img {
-      width: 64px;
-      height: 64px;
+      width: 112px;
+      height: 112px;
       object-fit: cover;
       border-radius: 12px;
       border: 1px solid var(--border);
       background: #f9fafb;
+    }
+    .last-sale-card .empty-thumb {
+      width: 112px;
+      height: 112px;
     }
     .last-sale-title {
       font-weight: 900;
@@ -623,11 +627,12 @@
         grid-template-columns: 1fr 1fr;
       }
       .last-sale-card {
-        grid-template-columns: 58px 1fr;
+        grid-template-columns: 92px 1fr;
       }
-      .last-sale-card img {
-        width: 54px;
-        height: 54px;
+      .last-sale-card img,
+      .last-sale-card .empty-thumb {
+        width: 86px;
+        height: 86px;
       }
       .market-row {
         grid-template-columns: 1fr;
@@ -738,7 +743,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.18: Marktmodus · Verkauf · Storno · Bericht</p>
+    <p>Offline-Lagerverwaltung v3.19: Marktmodus · Verkauf · Storno · Bericht</p>
   </header>
 
   <main>
@@ -1118,7 +1123,7 @@ function toggleSection(key) {
   state[key] = !state[key];
   saveSectionState(state);
   applySectionState(key, !!state[key]);
-  focusScanSoon();
+  updateScanFocusStatus();
 }
 
 function openSection(key) {
@@ -1619,6 +1624,17 @@ function updateScanFocusStatus() {
     ? "Scanbereit: Cursor ist im Feld „Hier scannen …“."
     : "Nicht scanbereit: Bitte in das Feld „Hier scannen …“ tippen. Nur wenn der Cursor dort aktiv ist, wird ein Scan verarbeitet.";
   updateReadyPanel();
+}
+
+function releaseScanFocusForControls(event) {
+  const scanInput = $("scanInput");
+  if (!scanInput || document.activeElement !== scanInput) return;
+  const target = event.target;
+  if (!target || target === scanInput) return;
+  if (target.closest && target.closest("button, select, input:not(#scanInput), textarea, label")) {
+    scanInput.blur();
+    setTimeout(updateScanFocusStatus, 0);
+  }
 }
 
 function cleanBarcode(value) {
@@ -2711,6 +2727,8 @@ function bindEvents() {
   });
   $("scanInput").addEventListener("focus", updateScanFocusStatus);
   $("scanInput").addEventListener("blur", updateScanFocusStatus);
+  document.addEventListener("pointerdown", releaseScanFocusForControls, true);
+  document.addEventListener("touchstart", releaseScanFocusForControls, true);
   document.addEventListener("click", () => setTimeout(updateScanFocusStatus, 0));
 
   $("imageFile").addEventListener("change", async (e) => {
@@ -2773,7 +2791,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.18 ist aktiv. Buttons funktionieren wieder.", "ok");
+    setStatus("Bereit. Version 3.19 ist aktiv. Buttons reagieren beim ersten Tippen, letztes Verkaufsbild ist größer.", "ok");
     focusScanSoon();
     updateScanFocusStatus();
 

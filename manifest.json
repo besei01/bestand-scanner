@@ -1,7 +1,7 @@
 {
   "name": "Bestand Scanner",
   "short_name": "Bestand",
-  "description": "Offline-Bestandsverwaltung v3.18 Fehlerkorrektur Buttons",
+  "description": "Offline-Bestandsverwaltung v3.19 mit verbessertem Button-Verhalten",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
