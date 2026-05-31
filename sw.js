@@ -1,4 +1,4 @@
-const CACHE_NAME = "bestand-scanner-v3-19";
+const CACHE_NAME = "bestand-scanner-v3-20";
 const ASSETS = [
   "./",
   "./index.html",

@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.19</title>
+  <title>Bestand Scanner v3.20</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -743,7 +743,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.19: Marktmodus · Verkauf · Storno · Bericht</p>
+    <p>Offline-Lagerverwaltung v3.20: JPG/PNG-Bilder im Backup</p>
   </header>
 
   <main>
@@ -882,8 +882,8 @@
           <input id="unknownMagnetNumber" autocomplete="off" inputmode="numeric" placeholder="optional">
         </div>
       </div>
-      <label for="unknownImage">Bild optional, JPG 100 × 100 Pixel</label>
-      <input id="unknownImage" type="file" accept="image/jpeg,image/jpg">
+      <label for="unknownImage">Bild optional, JPG oder PNG 100 × 100 Pixel</label>
+      <input id="unknownImage" type="file" accept="image/jpeg,image/jpg,image/png">
       <div class="actions" style="margin-top:12px">
         <button id="saveUnknown" class="good" type="button">Speichern & buchen</button>
         <button id="cancelUnknown" class="secondary" type="button">Abbrechen</button>
@@ -925,8 +925,8 @@
         </div>
       </div>
 
-      <label for="imageFile">Bild, JPG 100 × 100 Pixel</label>
-      <input id="imageFile" type="file" accept="image/jpeg,image/jpg">
+      <label for="imageFile">Bild, JPG oder PNG 100 × 100 Pixel</label>
+      <input id="imageFile" type="file" accept="image/jpeg,image/jpg,image/png">
       <img id="imagePreview" alt="Bildvorschau">
       <input id="currentImage" type="hidden">
 
@@ -1783,8 +1783,8 @@ function updateImagePreview(dataUrl) {
 function readImageFile(file) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve("");
-    if (!/^image\/jpe?g$/i.test(file.type) && !/\.jpe?g$/i.test(file.name)) {
-      reject(new Error("Bitte ein JPG-Bild auswählen."));
+    if (!/^image\/(jpe?g|png)$/i.test(file.type) && !/\.(jpe?g|png)$/i.test(file.name)) {
+      reject(new Error("Bitte ein JPG- oder PNG-Bild auswählen."));
       return;
     }
     const reader = new FileReader();
@@ -2791,7 +2791,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.19 ist aktiv. Buttons reagieren beim ersten Tippen, letztes Verkaufsbild ist größer.", "ok");
+    setStatus("Bereit. Version 3.20 ist aktiv. Vollbackup kann JPG- und PNG-Bilder enthalten.", "ok");
     focusScanSoon();
     updateScanFocusStatus();
 

@@ -1,7 +1,7 @@
 {
   "name": "Bestand Scanner",
   "short_name": "Bestand",
-  "description": "Offline-Bestandsverwaltung v3.19 mit verbessertem Button-Verhalten",
+  "description": "Offline-Bestandsverwaltung v3.20 mit JPG/PNG-Bildsupport",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.19
+# Bestand Scanner PWA v3.20
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -8,7 +8,7 @@ Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 - `stock`: Bestand
 - `category`: Kategorie
 - `dimensions`: Maße
-- `image`: Bild als eingebettete Bilddaten, empfohlen JPG 100 × 100 Pixel
+- `image`: Bild als eingebettete Bilddaten, JPG oder PNG 100 × 100 Pixel
 
 QR-Codes werden nicht gespeichert. Sie werden bei Bedarf aus `barcode` erzeugt.
 
@@ -193,3 +193,10 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Buttons/Bedienelemente reagieren zuverlässiger beim ersten Tippen.
 - Das Scan-Feld zieht den Fokus nicht mehr automatisch beim Öffnen/Einklappen von Bereichen.
 - Das Bild bei `Letzter Verkauf` wird deutlich größer angezeigt.
+
+
+## Neu in Version 3.20
+
+- Vollbackup und Import unterstützen jetzt `data:image/jpeg` und `data:image/png`.
+- Bilder im Artikelformular können als JPG oder PNG ausgewählt werden.
+- Damit kann die Desktop-Bestandsverwaltung quadratische Bilder als JPG und Hoch-/Querformate als PNG mit Transparenz liefern.
