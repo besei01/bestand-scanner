@@ -1,4 +1,4 @@
-# Bestand Scanner PWA v3.20
+﻿# Bestand Scanner PWA v3.21
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -200,3 +200,12 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Vollbackup und Import unterstützen jetzt `data:image/jpeg` und `data:image/png`.
 - Bilder im Artikelformular können als JPG oder PNG ausgewählt werden.
 - Damit kann die Desktop-Bestandsverwaltung quadratische Bilder als JPG und Hoch-/Querformate als PNG mit Transparenz liefern.
+
+
+## Neu in Version 3.21
+
+- Die App ist jetzt als Markt-App gedacht.
+- Artikel anlegen und bearbeiten wurde aus der Oberfläche entfernt.
+- In der Artikelliste gibt es keine Bestandskorrektur-, Bearbeiten- oder Löschen-Buttons mehr.
+- Artikel und Stammdaten kommen aus der Desktop-Bestandsverwaltung.
+- Auf dem Markt werden nur Verkäufe gescannt, vom Handy-Bestand abgezogen und als Verkaufshistorie exportiert.

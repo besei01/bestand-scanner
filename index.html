@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.20</title>
+  <title>Bestand Scanner v3.21</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -743,7 +743,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Lagerverwaltung v3.20: JPG/PNG-Bilder im Backup</p>
+    <p>Offline-Markt-App v3.21: Scannen, Bestand ansehen, Verkäufe exportieren</p>
   </header>
 
   <main>
@@ -852,95 +852,9 @@
         <div id="salesHistoryRows" class="sales-history-list"></div>
       </div>
     </section>
-
-    <section id="unknownCard" class="card hidden">
-      <h2>Unbekannten Artikel anlegen</h2>
-      <p class="hint">Artikel können hier manuell angelegt werden. Unbekannte Scans werden nicht automatisch angelegt.</p>
-      <label for="unknownBarcode">Artikelnummer / Barcode</label>
-      <input id="unknownBarcode" autocomplete="off">
-      <div class="row">
-        <div>
-          <label for="unknownStock">Startbestand</label>
-          <input id="unknownStock" type="number" step="1" value="0">
-        </div>
-        <div>
-          <label for="unknownPrice">Preis</label>
-          <input id="unknownPrice" type="text" inputmode="decimal" value="0,00" placeholder="z. B. 4,50">
-        </div>
-      </div>
-      <div class="row3">
-        <div>
-          <label for="unknownCategory">Kategorie</label>
-          <input id="unknownCategory" autocomplete="off" placeholder="optional">
-        </div>
-        <div>
-          <label for="unknownDimensions">Maße</label>
-          <input id="unknownDimensions" autocomplete="off" placeholder="optional">
-        </div>
-        <div>
-          <label for="unknownMagnetNumber">MagnetNummer</label>
-          <input id="unknownMagnetNumber" autocomplete="off" inputmode="numeric" placeholder="optional">
-        </div>
-      </div>
-      <label for="unknownImage">Bild optional, JPG oder PNG 100 × 100 Pixel</label>
-      <input id="unknownImage" type="file" accept="image/jpeg,image/jpg,image/png">
-      <div class="actions" style="margin-top:12px">
-        <button id="saveUnknown" class="good" type="button">Speichern & buchen</button>
-        <button id="cancelUnknown" class="secondary" type="button">Abbrechen</button>
-      </div>
-    </section>
-
-    <section class="card" id="editCard">
-      <div class="section-head">
-        <h2>2. Artikel anlegen / bearbeiten</h2>
-        <button id="toggleEditSection" class="toggle-section" type="button">Ausblenden</button>
-      </div>
-      <div id="editSectionBody" class="collapsible-body">
-      <div class="row3">
-        <div>
-          <label for="barcode">Artikelnummer / Barcode</label>
-          <input id="barcode" autocomplete="off" placeholder="z. B. ART-000123">
-        </div>
-        <div>
-          <label for="stock">Bestand</label>
-          <input id="stock" type="number" step="1" value="0">
-        </div>
-        <div>
-          <label for="price">Preis</label>
-          <input id="price" type="text" inputmode="decimal" value="0,00" placeholder="z. B. 4,50">
-        </div>
-      </div>
-      <div class="row3">
-        <div>
-          <label for="category">Kategorie</label>
-          <input id="category" autocomplete="off" placeholder="z. B. Magnete">
-        </div>
-        <div>
-          <label for="dimensions">Maße</label>
-          <input id="dimensions" autocomplete="off" placeholder="z. B. 3x3">
-        </div>
-        <div>
-          <label for="magnetNumber">MagnetNummer</label>
-          <input id="magnetNumber" autocomplete="off" inputmode="numeric" placeholder="z. B. 1">
-        </div>
-      </div>
-
-      <label for="imageFile">Bild, JPG oder PNG 100 × 100 Pixel</label>
-      <input id="imageFile" type="file" accept="image/jpeg,image/jpg,image/png">
-      <img id="imagePreview" alt="Bildvorschau">
-      <input id="currentImage" type="hidden">
-
-      <div class="actions" style="margin-top:12px">
-        <button id="saveProduct" class="good" type="button">Artikel speichern</button>
-        <button id="clearForm" class="secondary" type="button">Felder leeren</button>
-        <button id="removeImage" class="secondary" type="button">Bild entfernen</button>
-      </div>
-      </div>
-    </section>
-
     <section class="card" id="listCard">
       <div class="section-head">
-        <h2>3. Artikelliste</h2>
+        <h2>2. Artikelliste</h2>
         <button id="toggleListSection" class="toggle-section" type="button">Ausblenden</button>
       </div>
       <div id="listSectionBody" class="collapsible-body">
@@ -972,7 +886,7 @@
 
     <section id="reportCard" class="card">
       <div class="section-head">
-        <h2>4. Bestandsübersicht / Drucken</h2>
+        <h2>3. Bestandsübersicht / Drucken</h2>
         <button id="toggleReportSection" class="toggle-section" type="button">Ausblenden</button>
       </div>
       <div id="reportSectionBody" class="collapsible-body">
@@ -1041,15 +955,11 @@
 
     <section class="card" id="backupCard">
       <div class="section-head">
-        <h2>5. Sicherung / Import</h2>
+        <h2>4. Sicherung / Import</h2>
         <button id="toggleBackupSection" class="toggle-section" type="button">Ausblenden</button>
       </div>
       <div id="backupSectionBody" class="collapsible-body">
-      <p class="hint">CSV enthält Artikelnummer, Bestand, Kategorie, Maße, MagnetNummer und Preis. Das Vollbackup enthält zusätzlich Bilder, Märkte und Verkaufshistorie.</p>
-      <div class="actions">
-        <button id="exportCsv" type="button">CSV exportieren</button>
-        <button id="importCsvBtn" class="secondary" type="button">CSV importieren</button>
-      </div>
+      <p class="hint">Artikel und Stammdaten kommen aus der Bestandsverwaltung. Auf dem Markt werden nur Verkäufe erfasst und exportiert.</p>
       <div class="actions" style="margin-top:10px">
         <button id="exportFull" class="good" type="button">Vollbackup mit Bildern exportieren</button>
         <button id="importFullBtn" class="secondary" type="button">Vollbackup wiederherstellen</button>
@@ -1057,10 +967,8 @@
       <div class="actions" style="margin-top:10px">
         <button id="exportSales" type="button">Verkaufshistorie exportieren</button>
       </div>
-      <input id="importCsvFile" class="hidden" type="file" accept=".csv,text/csv,text/plain">
       <input id="importFullFile" class="hidden" type="file" accept=".json,application/json">
       <div class="actions" style="margin-top:10px">
-        <button id="deleteAll" class="bad" type="button">Alle Artikel löschen</button>
         <button id="deleteSales" class="bad" type="button">Verkaufshistorie löschen</button>
       </div>
       </div>
@@ -1082,7 +990,6 @@ const $ = (id) => document.getElementById(id);
 const COLLAPSIBLE_SECTIONS = [
   { key: "market", body: "marketSectionBody", button: "toggleMarketSection" },
   { key: "salesHistory", body: "salesHistorySectionBody", button: "toggleSalesHistorySection" },
-  { key: "edit", body: "editSectionBody", button: "toggleEditSection" },
   { key: "list", body: "listSectionBody", button: "toggleListSection" },
   { key: "report", body: "reportSectionBody", button: "toggleReportSection" },
   { key: "backup", body: "backupSectionBody", button: "toggleBackupSection" }
@@ -1135,10 +1042,6 @@ function openSection(key) {
 
 function openReportSection() {
   openSection("report");
-}
-
-function openEditSection() {
-  openSection("edit");
 }
 
 function openDb() {
@@ -1728,7 +1631,6 @@ async function processBarcode(raw) {
   const product = await getProduct(barcode);
 
   if (!product) {
-    $("unknownCard").classList.add("hidden");
     setStatus("Unbekannter Code: " + barcode + "\nDieser QR-/Barcode ist nicht in der Artikelliste vorhanden. Es wurde nichts gebucht.", "bad");
     playFeedback("bad");
     $("scanInput").value = "";
@@ -1943,33 +1845,14 @@ async function refresh() {
           <div class="meta-item"><span class="meta-label">MagnetNr.</span><span class="meta-value">${escapeHtml(magnetNumber)}</span></div>
           <div class="meta-item"><span class="meta-label">Preis</span><span class="meta-value">${escapeHtml(price)}</span></div>
         </div>
-        <div class="product-actions">
-          <button class="secondary" data-edit="${escapeAttr(p.barcode)}" type="button">Bearbeiten</button>
-          <button class="good" data-plus="${escapeAttr(p.barcode)}" type="button">+1</button>
-          <button class="warn" data-minus="${escapeAttr(p.barcode)}" type="button">−1</button>
-          <button class="bad" data-del="${escapeAttr(p.barcode)}" type="button">Löschen</button>
-        </div>
       </div>
     `;
     list.appendChild(card);
   }
 
-  list.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", async () => editProduct(await getProduct(btn.getAttribute("data-edit")))));
-  list.querySelectorAll("[data-plus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-plus"), 1)));
-  list.querySelectorAll("[data-minus]").forEach(btn => btn.addEventListener("click", async () => adjustStock(btn.getAttribute("data-minus"), -1)));
-
   await updateReportCategoryOptions(products);
   if ($("reportPreview")) updateReportPreview();
   await refreshMarketsAndSales();
-
-  list.querySelectorAll("[data-del]").forEach(btn => btn.addEventListener("click", async () => {
-    const barcode = btn.getAttribute("data-del");
-    if (confirm(`Artikel ${barcode} wirklich löschen?`)) {
-      await deleteProduct(barcode);
-      setStatus("Artikel gelöscht: " + barcode, "warn");
-      await refresh();
-    }
-  }));
 }
 
 function escapeHtml(s) {
@@ -2135,6 +2018,7 @@ async function importFullBackup(file) {
     }
   }
   if (data.activeMarketId) setActiveMarketId(data.activeMarketId);
+  if ($("reportCategory")) $("reportCategory").value = "";
   setStatus(`${count} Artikel, ${marketCount} Märkte und ${salesCount} Verkäufe aus Vollbackup wiederhergestellt.`, "ok");
   await refresh();
 }
@@ -2708,7 +2592,6 @@ function bindEvents() {
   });
   $("toggleMarketSection").addEventListener("click", () => toggleSection("market"));
   $("toggleSalesHistorySection").addEventListener("click", () => toggleSection("salesHistory"));
-  $("toggleEditSection").addEventListener("click", () => toggleSection("edit"));
   $("toggleListSection").addEventListener("click", () => toggleSection("list"));
   $("toggleReportSection").addEventListener("click", () => toggleSection("report"));
   $("toggleBackupSection").addEventListener("click", () => toggleSection("backup"));
@@ -2731,21 +2614,6 @@ function bindEvents() {
   document.addEventListener("touchstart", releaseScanFocusForControls, true);
   document.addEventListener("click", () => setTimeout(updateScanFocusStatus, 0));
 
-  $("imageFile").addEventListener("change", async (e) => {
-    try {
-      const dataUrl = await readImageFile(e.target.files[0]);
-      if (dataUrl) updateImagePreview(dataUrl);
-    } catch (err) {
-      alert(err.message || String(err));
-      e.target.value = "";
-    }
-  });
-
-  $("saveProduct").addEventListener("click", saveProductFromForm);
-  $("clearForm").addEventListener("click", () => { clearProductForm(); focusScanSoon(); });
-  $("removeImage").addEventListener("click", () => { $("imageFile").value = ""; updateImagePreview(""); });
-  $("saveUnknown").addEventListener("click", saveUnknownAndBook);
-  $("cancelUnknown").addEventListener("click", () => { $("unknownCard").classList.add("hidden"); focusScanSoon(); });
   $("search").addEventListener("input", refresh);
   $("sortBy").addEventListener("change", refresh);
 
@@ -2756,14 +2624,7 @@ function bindEvents() {
     $(id).addEventListener("change", updateReportPreview);
   });
 
-  $("exportCsv").addEventListener("click", exportCsv);
   $("exportSales").addEventListener("click", exportSalesCsv);
-  $("importCsvBtn").addEventListener("click", () => $("importCsvFile").click());
-  $("importCsvFile").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (file) await importCsv(file);
-    e.target.value = "";
-  });
 
   $("exportFull").addEventListener("click", exportFullBackup);
   $("importFullBtn").addEventListener("click", () => $("importFullFile").click());
@@ -2773,7 +2634,6 @@ function bindEvents() {
     e.target.value = "";
   });
 
-  $("deleteAll").addEventListener("click", deleteAllData);
   $("deleteSales").addEventListener("click", deleteSalesHistory);
 }
 
@@ -2791,7 +2651,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.20 ist aktiv. Vollbackup kann JPG- und PNG-Bilder enthalten.", "ok");
+    setStatus("Bereit. Version 3.21 ist aktiv. Markt-App ohne Artikelbearbeitung.", "ok");
     focusScanSoon();
     updateScanFocusStatus();
 
