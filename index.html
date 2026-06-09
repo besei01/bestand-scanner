@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.21</title>
+  <title>Bestand Scanner v3.22</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -743,7 +743,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Markt-App v3.21: Scannen, Bestand ansehen, Verkäufe exportieren</p>
+    <p>Offline-Markt-App v3.22: Scannen, Bestand ansehen, Verkäufe exportieren</p>
   </header>
 
   <main>
@@ -803,13 +803,8 @@
             <option value="">Kein aktiver Markt</option>
           </select>
         </div>
-        <div>
-          <label for="newMarketName">Neuen Markt anlegen</label>
-          <input id="newMarketName" autocomplete="off" placeholder="z. B. Wochenmarkt Köln">
-        </div>
       </div>
       <div class="actions" style="margin-top:12px">
-        <button id="addMarket" class="good" type="button">Markt hinzufügen</button>
         <button id="finishMarket" class="warn" type="button">Markt abschließen</button>
         <button id="clearActiveMarket" class="secondary" type="button">Kein aktiver Markt</button>
       </div>
@@ -864,6 +859,12 @@
             <input id="search" autocomplete="off" placeholder="Artikelnummer, Kategorie, Maße, MagnetNummer oder Preis …">
           </div>
           <div>
+            <label for="listCategory">Kat1 filtern</label>
+            <select id="listCategory">
+              <option value="">Alle Kat1</option>
+            </select>
+          </div>
+          <div>
             <label for="sortBy">Sortieren nach</label>
             <select id="sortBy">
               <option value="barcode-asc">Artikelnummer aufsteigend</option>
@@ -881,6 +882,9 @@
         </div>
         <p id="summary" class="hint"></p>
         <div id="productRows" class="product-list"></div>
+        <div class="actions" style="margin-top:12px">
+          <button id="hideListBottom" class="secondary" type="button">Artikelliste ausblenden</button>
+        </div>
       </div>
     </section>
 
@@ -1795,9 +1799,12 @@ async function adjustStock(barcode, delta) {
 
 async function refresh() {
   const products = await getAllProducts();
+  await updateListCategoryOptions(products);
   const query = $("search").value.trim().toLowerCase();
+  const listCategory = $("listCategory") ? $("listCategory").value : "";
   const filtered = products.filter(p => {
     const haystack = `${p.barcode} ${p.category || ""} ${p.dimensions || ""} ${p.magnetNumber || ""} ${formatPrice(p.price || 0)}`.toLowerCase();
+    if (listCategory && (p.category || "") !== listCategory) return false;
     return !query || haystack.includes(query);
   });
 
@@ -1853,6 +1860,23 @@ async function refresh() {
   await updateReportCategoryOptions(products);
   if ($("reportPreview")) updateReportPreview();
   await refreshMarketsAndSales();
+}
+
+async function updateListCategoryOptions(products = null) {
+  const select = $("listCategory");
+  if (!select) return;
+  const rows = products || await getAllProducts();
+  const current = select.value;
+  const categories = [...new Set(rows.map(p => p.category || "").filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
+  select.innerHTML = `<option value="">Alle Kat1</option>`;
+  for (const category of categories) {
+    const opt = document.createElement("option");
+    opt.value = category;
+    opt.textContent = category;
+    select.appendChild(opt);
+  }
+  select.value = categories.includes(current) ? current : "";
 }
 
 function escapeHtml(s) {
@@ -2018,6 +2042,7 @@ async function importFullBackup(file) {
     }
   }
   if (data.activeMarketId) setActiveMarketId(data.activeMarketId);
+  if ($("listCategory")) $("listCategory").value = "";
   if ($("reportCategory")) $("reportCategory").value = "";
   setStatus(`${count} Artikel, ${marketCount} Märkte und ${salesCount} Verkäufe aus Vollbackup wiederhergestellt.`, "ok");
   await refresh();
@@ -2250,18 +2275,9 @@ async function refreshMarketsAndSales() {
       row.className = "market-row";
       row.innerHTML = `
         <div><strong>${escapeHtml(market.name)}</strong>${market.id === activeId ? ` <span class="small">aktiv</span>` : ""}</div>
-        <button class="bad" data-delete-market="${escapeAttr(market.id)}" type="button">Löschen</button>
       `;
       list.appendChild(row);
     }
-    list.querySelectorAll("[data-delete-market]").forEach(btn => btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-delete-market");
-      const market = markets.find(m => m.id === id);
-      if (!confirm(`Markt "${market?.name || id}" löschen? Verkaufshistorie bleibt erhalten.`)) return;
-      await deleteMarket(id);
-      if (getActiveMarketId() === id) setActiveMarketId("");
-      await refreshMarketsAndSales();
-    }));
   }
 
   const recent = $("recentSales");
@@ -2288,20 +2304,6 @@ async function refreshMarketsAndSales() {
   await updateReadyPanel();
   await checkBackupReminder();
   await updateMarketReportPreview();
-}
-
-async function addMarketFromForm() {
-  openSection("market");
-  const name = $("newMarketName").value.trim();
-  if (!name) {
-    alert("Bitte Marktname eingeben.");
-    return;
-  }
-  const market = await putMarket({ name });
-  $("newMarketName").value = "";
-  setActiveMarketId(market.id);
-  await refreshMarketsAndSales();
-  setStatus("Markt angelegt und aktiviert: " + market.name, "ok");
 }
 
 async function exportSalesCsv() {
@@ -2582,10 +2584,8 @@ function bindEvents() {
     $(id).addEventListener("input", updateMarketReportPreview);
     $(id).addEventListener("change", updateMarketReportPreview);
   });
-  $("addMarket").addEventListener("click", addMarketFromForm);
   $("clearActiveMarket").addEventListener("click", async () => { setActiveMarketId(""); await refreshMarketsAndSales(); await updateReadyPanel(); });
   $("activeMarket").addEventListener("change", async (e) => { setActiveMarketId(e.target.value); await refreshMarketsAndSales(); await updateReadyPanel(); });
-  $("newMarketName").addEventListener("keydown", async (e) => { if (e.key === "Enter") { e.preventDefault(); await addMarketFromForm(); } });
   ["salesHistoryMarketFilter", "salesHistorySearch", "salesHistoryLimit"].forEach(id => {
     $(id).addEventListener("input", refreshSalesHistory);
     $(id).addEventListener("change", refreshSalesHistory);
@@ -2615,7 +2615,12 @@ function bindEvents() {
   document.addEventListener("click", () => setTimeout(updateScanFocusStatus, 0));
 
   $("search").addEventListener("input", refresh);
+  $("listCategory").addEventListener("change", refresh);
   $("sortBy").addEventListener("change", refresh);
+  $("hideListBottom").addEventListener("click", () => {
+    toggleSection("list");
+    document.getElementById("listCard")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 
   $("updateReport").addEventListener("click", updateReportPreview);
   $("printReport").addEventListener("click", printInventoryReport);
@@ -2651,7 +2656,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.21 ist aktiv. Markt-App ohne Artikelbearbeitung.", "ok");
+    setStatus("Bereit. Version 3.22 ist aktiv. Markt-App ohne Artikelbearbeitung.", "ok");
     focusScanSoon();
     updateScanFocusStatus();
 
