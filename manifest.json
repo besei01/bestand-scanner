@@ -1,7 +1,7 @@
 ﻿{
   "name": "Bestand Scanner",
   "short_name": "Bestand",
-  "description": "Offline-Markt-App v3.23 zum Scannen und Verkaufen",
+  "description": "Offline-Markt-App v3.24 zum Scannen und Verkaufen",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -20,4 +20,5 @@
     }
   ]
 }
+
 

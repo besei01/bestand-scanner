@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "bestand-scanner-v3-23";
+﻿const CACHE_NAME = "bestand-scanner-v3-24";
 const ASSETS = [
   "./",
   "./index.html",
@@ -31,4 +31,5 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
 
