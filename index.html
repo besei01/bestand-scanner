@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <title>Bestand Scanner v3.22</title>
+  <title>Bestand Scanner v3.23</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -449,6 +449,25 @@
       padding: 8px 10px;
       font-size: 13px;
     }
+    .recent-scan-sales {
+      display: grid;
+      grid-column: 1 / -1;
+      gap: 8px;
+      width: 100%;
+    }
+    .recent-scan-sales .last-sale-card {
+      margin-top: 0;
+      box-shadow: none;
+    }
+    .recent-scan-sales .compact-sale {
+      grid-template-columns: 74px 1fr;
+      padding: 8px;
+    }
+    .recent-scan-sales .compact-sale img,
+    .recent-scan-sales .compact-sale .empty-thumb {
+      width: 64px;
+      height: 64px;
+    }
     .backup-reminder {
       padding: 10px 12px;
       border-radius: 12px;
@@ -743,7 +762,7 @@
 <body>
   <header>
     <h1>Bestand Scanner</h1>
-    <p>Offline-Markt-App v3.22: Scannen, Bestand ansehen, Verkäufe exportieren</p>
+    <p>Offline-Markt-App v3.23: Scannen, Bestand ansehen, Verkäufe exportieren</p>
   </header>
 
   <main>
@@ -862,6 +881,24 @@
             <label for="listCategory">Kat1 filtern</label>
             <select id="listCategory">
               <option value="">Alle Kat1</option>
+            </select>
+          </div>
+          <div>
+            <label for="listSubcategory">Kat2 filtern</label>
+            <select id="listSubcategory">
+              <option value="">Alle Kat2</option>
+            </select>
+          </div>
+          <div>
+            <label for="listSubcategory2">Kat3 filtern</label>
+            <select id="listSubcategory2">
+              <option value="">Alle Kat3</option>
+            </select>
+          </div>
+          <div>
+            <label for="listSubcategory3">Kat4 filtern</label>
+            <select id="listSubcategory3">
+              <option value="">Alle Kat4</option>
             </select>
           </div>
           <div>
@@ -1401,36 +1438,39 @@ async function renderLastSaleCard() {
   const box = $("lastSaleCard");
   if (!box) return;
 
-  const sale = await getLastActiveSale();
-  if (!sale) {
+  const sales = (await getActiveSales()).slice(0, 3);
+  if (!sales.length) {
     box.className = "last-sale-card empty";
     box.textContent = "Noch kein aktiver Verkauf erfasst.";
     return;
   }
 
-  const product = await getProduct(sale.barcode);
-  const img = product?.image
-    ? `<img src="${escapeAttr(product.image)}" alt="">`
-    : `<div class="empty-thumb">kein Bild</div>`;
+  const rows = [];
+  for (let i = 0; i < sales.length; i++) {
+    const sale = sales[i];
+    const product = await getProduct(sale.barcode);
+    const img = product?.image
+      ? `<img src="${escapeAttr(product.image)}" alt="">`
+      : `<div class="empty-thumb">kein Bild</div>`;
+    rows.push(`
+      <div class="last-sale-card${i > 0 ? " compact-sale" : ""}">
+        <div>${img}</div>
+        <div>
+          <div class="last-sale-title">${i === 0 ? "Letzter Verkauf" : "Verkauf"}: ${escapeHtml(sale.barcode)}</div>
+          <div class="last-sale-meta">
+            Zeit: ${escapeHtml(formatDateTime(sale.ts))}<br>
+            Bestand: ${Number(sale.stockBefore || 0)} → ${Number(sale.stockAfter || 0)}
+          </div>
+          ${i === 0 ? `<div class="last-sale-actions"><button id="undoLastSale" class="warn" type="button">Letzten Verkauf rückgängig</button></div>` : ""}
+        </div>
+      </div>
+    `);
+  }
 
   box.className = "last-sale-card";
-  box.innerHTML = `
-    <div>${img}</div>
-    <div>
-      <div class="last-sale-title">Letzter Verkauf: ${escapeHtml(sale.barcode)}</div>
-      <div class="last-sale-meta">
-        Markt: ${escapeHtml(sale.marketName)}<br>
-        Zeit: ${escapeHtml(formatDateTime(sale.ts))}<br>
-        Menge: ${Number(sale.quantity || 0)} · Preis: ${formatMoney(sale.unitPrice)} · Summe: ${formatMoney(sale.total)}<br>
-        Bestand: ${Number(sale.stockBefore || 0)} → ${Number(sale.stockAfter || 0)}
-      </div>
-      <div class="last-sale-actions">
-        <button id="undoLastSale" class="warn" type="button">Letzten Verkauf rückgängig</button>
-      </div>
-    </div>
-  `;
+  box.innerHTML = `<div class="recent-scan-sales">${rows.join("")}</div>`;
 
-  $("undoLastSale").addEventListener("click", () => cancelSaleById(sale.id, "Letzter Verkauf rückgängig"));
+  $("undoLastSale")?.addEventListener("click", () => cancelSaleById(sales[0].id, "Letzter Verkauf rückgängig"));
 }
 
 async function cancelSaleById(id, reason = "Storno") {
@@ -1802,9 +1842,15 @@ async function refresh() {
   await updateListCategoryOptions(products);
   const query = $("search").value.trim().toLowerCase();
   const listCategory = $("listCategory") ? $("listCategory").value : "";
+  const listSubcategory = $("listSubcategory") ? $("listSubcategory").value : "";
+  const listSubcategory2 = $("listSubcategory2") ? $("listSubcategory2").value : "";
+  const listSubcategory3 = $("listSubcategory3") ? $("listSubcategory3").value : "";
   const filtered = products.filter(p => {
-    const haystack = `${p.barcode} ${p.category || ""} ${p.dimensions || ""} ${p.magnetNumber || ""} ${formatPrice(p.price || 0)}`.toLowerCase();
+    const haystack = `${p.barcode} ${p.category || ""} ${p.subcategory || ""} ${p.subcategory2 || ""} ${p.subcategory3 || ""} ${p.dimensions || ""} ${p.magnetNumber || ""} ${formatPrice(p.price || 0)}`.toLowerCase();
     if (listCategory && (p.category || "") !== listCategory) return false;
+    if (listSubcategory && (p.subcategory || "") !== listSubcategory) return false;
+    if (listSubcategory2 && (p.subcategory2 || "") !== listSubcategory2) return false;
+    if (listSubcategory3 && (p.subcategory3 || "") !== listSubcategory3) return false;
     return !query || haystack.includes(query);
   });
 
@@ -1835,22 +1881,12 @@ async function refresh() {
     const card = document.createElement("div");
     card.className = "product-card";
     const thumb = p.image ? `<img class="thumb" src="${escapeAttr(p.image)}" alt="">` : `<div class="empty-thumb">kein Bild</div>`;
-    const category = p.category || "—";
-    const dimensions = p.dimensions || "—";
-    const magnetNumber = p.magnetNumber || "—";
-    const price = formatMoney(p.price || 0);
     card.innerHTML = `
       <div>${thumb}</div>
       <div class="product-main">
         <div class="product-top">
           <div class="product-code">${escapeHtml(p.barcode)}</div>
           <div class="stock-pill">${Number(p.stock || 0)}</div>
-        </div>
-        <div class="product-meta">
-          <div class="meta-item"><span class="meta-label">Kategorie</span><span class="meta-value">${escapeHtml(category)}</span></div>
-          <div class="meta-item"><span class="meta-label">Maße</span><span class="meta-value">${escapeHtml(dimensions)}</span></div>
-          <div class="meta-item"><span class="meta-label">MagnetNr.</span><span class="meta-value">${escapeHtml(magnetNumber)}</span></div>
-          <div class="meta-item"><span class="meta-label">Preis</span><span class="meta-value">${escapeHtml(price)}</span></div>
         </div>
       </div>
     `;
@@ -1863,20 +1899,28 @@ async function refresh() {
 }
 
 async function updateListCategoryOptions(products = null) {
-  const select = $("listCategory");
-  if (!select) return;
   const rows = products || await getAllProducts();
-  const current = select.value;
-  const categories = [...new Set(rows.map(p => p.category || "").filter(Boolean))]
-    .sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
-  select.innerHTML = `<option value="">Alle Kat1</option>`;
-  for (const category of categories) {
-    const opt = document.createElement("option");
-    opt.value = category;
-    opt.textContent = category;
-    select.appendChild(opt);
+  const configs = [
+    ["listCategory", "category", "Alle Kat1"],
+    ["listSubcategory", "subcategory", "Alle Kat2"],
+    ["listSubcategory2", "subcategory2", "Alle Kat3"],
+    ["listSubcategory3", "subcategory3", "Alle Kat4"],
+  ];
+  for (const [id, key, label] of configs) {
+    const select = $(id);
+    if (!select) continue;
+    const current = select.value;
+    const values = [...new Set(rows.map(p => p[key] || "").filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
+    select.innerHTML = `<option value="">${label}</option>`;
+    for (const value of values) {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = value;
+      select.appendChild(opt);
+    }
+    select.value = values.includes(current) ? current : "";
   }
-  select.value = categories.includes(current) ? current : "";
 }
 
 function escapeHtml(s) {
@@ -1966,6 +2010,9 @@ async function importCsv(file) {
       barcode,
       stock: parseInt(r[stockI >= 0 ? stockI : 1], 10) || 0,
       category: (r[categoryI >= 0 ? categoryI : 2] || old?.category || "").trim(),
+      subcategory: old?.subcategory || "",
+      subcategory2: old?.subcategory2 || "",
+      subcategory3: old?.subcategory3 || "",
       dimensions: (r[dimensionsI >= 0 ? dimensionsI : 3] || old?.dimensions || "").trim(),
       magnetNumber: (r[magnetNumberI >= 0 ? magnetNumberI : 4] || old?.magnetNumber || "").trim(),
       price: parsePrice(r[priceI >= 0 ? priceI : 5] ?? old?.price ?? 0),
@@ -2019,6 +2066,9 @@ async function importFullBackup(file) {
       barcode,
       stock: Number(p.stock || 0),
       category: p.category || p.kategorie || "",
+      subcategory: p.subcategory || p.unterkategorie || "",
+      subcategory2: p.subcategory2 || p.unterkategorie2 || "",
+      subcategory3: p.subcategory3 || p.unterkategorie3 || "",
       dimensions: p.dimensions || p.maße || p.masse || p.size || "",
       magnetNumber: p.magnetNumber || p.magnetnummer || p.magnetNummer || p.magnet_no || p.magnetNo || "",
       price: parsePrice(p.price ?? p.preis ?? 0),
@@ -2043,6 +2093,9 @@ async function importFullBackup(file) {
   }
   if (data.activeMarketId) setActiveMarketId(data.activeMarketId);
   if ($("listCategory")) $("listCategory").value = "";
+  if ($("listSubcategory")) $("listSubcategory").value = "";
+  if ($("listSubcategory2")) $("listSubcategory2").value = "";
+  if ($("listSubcategory3")) $("listSubcategory3").value = "";
   if ($("reportCategory")) $("reportCategory").value = "";
   setStatus(`${count} Artikel, ${marketCount} Märkte und ${salesCount} Verkäufe aus Vollbackup wiederhergestellt.`, "ok");
   await refresh();
@@ -2615,7 +2668,9 @@ function bindEvents() {
   document.addEventListener("click", () => setTimeout(updateScanFocusStatus, 0));
 
   $("search").addEventListener("input", refresh);
-  $("listCategory").addEventListener("change", refresh);
+  ["listCategory", "listSubcategory", "listSubcategory2", "listSubcategory3"].forEach(id => {
+    $(id)?.addEventListener("change", refresh);
+  });
   $("sortBy").addEventListener("change", refresh);
   $("hideListBottom").addEventListener("click", () => {
     toggleSection("list");
@@ -2656,7 +2711,7 @@ async function init() {
     await refresh();
     await updateReportPreview();
     await refreshMarketsAndSales();
-    setStatus("Bereit. Version 3.22 ist aktiv. Markt-App ohne Artikelbearbeitung.", "ok");
+    setStatus("Bereit. Version 3.23 ist aktiv. Markt-App ohne Artikelbearbeitung.", "ok");
     focusScanSoon();
     updateScanFocusStatus();
 
@@ -2674,3 +2729,4 @@ init();
 </script>
 </body>
 </html>
+

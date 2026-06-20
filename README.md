@@ -1,4 +1,4 @@
-﻿# Bestand Scanner PWA v3.22
+﻿# Bestand Scanner PWA v3.23
 
 Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
@@ -6,7 +6,10 @@ Offline-Web-App für iPhone + Bluetooth-Barcode-Scanner.
 
 - `barcode`: Artikelnummer / Barcode
 - `stock`: Bestand
-- `category`: Kategorie
+- `category`: Kat1
+- `subcategory`: Kat2
+- `subcategory2`: Kat3
+- `subcategory3`: Kat4
 - `dimensions`: Maße
 - `image`: Bild als eingebettete Bilddaten, JPG oder PNG 100 × 100 Pixel
 
@@ -202,8 +205,11 @@ Der Ein-/Ausblend-Zustand wird lokal auf dem iPhone gespeichert.
 - Damit kann die Desktop-Bestandsverwaltung quadratische Bilder als JPG und Hoch-/Querformate als PNG mit Transparenz liefern.
 
 
-## Neu in Version 3.22
+## Neu in Version 3.23
 
+- Artikelliste kann nach Kat1, Kat2, Kat3 und Kat4 filtern.
+- Artikelliste zeigt kompakt nur Bild, Artikelnummer und Bestand.
+- Scanbereich zeigt die letzten 3 Verkäufe kompakt mit Bild, Artikelnummer, Zeit und Bestandsänderung.
 - Die App ist jetzt als Markt-App gedacht.
 - Artikel anlegen und bearbeiten wurde aus der Oberfläche entfernt.
 - In der Artikelliste gibt es keine Bestandskorrektur-, Bearbeiten- oder Löschen-Buttons mehr.
